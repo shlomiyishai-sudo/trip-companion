@@ -82,9 +82,9 @@ window.TRIP = {
     { id: "newyork", name: "New York Café", he: "ניו יורק קפה", layer: "maybe", status: "maybe", tags: ["sweet","indoor","romantic"], q: "New York Café Budapest", lat: 47.4985, lng: 19.0710,
       why: "\"בית הקפה היפה בעולם\". מאוד תיירותי. לפי הרילס של מאיה, בצהריים התור ארוך: מגיעים בפתיחה בבוקר, או מזמינים מקום מראש." },
     { id: "highnote", name: "High Note SkyBar", he: "הבר על הגג High Note", layer: "food", status: "must", tags: ["romantic","drink","view"], q: "High Note SkyBar Budapest", lat: 47.5010, lng: 19.0525,
-      why: "בר קוקטיילים על הגג, מול הכיפה של הבזיליקה, 5 דקות מהמלון. מושלם לשקיעה או לסוף הערב." },
+      why: "בר קוקטיילים על הגג של מלון אריה, מול הכיפה של הבזיליקה, 5 דקות מהמלון. בחורף יושבים בחלק המקורה, שגם הוא צופה לנוף. חובה להזמין באתר highnoteskybar.hu (+36 20 438 8648)." },
     { id: "bar360", name: "360 Bar", he: "בר 360", layer: "food", status: "nice", tags: ["romantic","drink","view"], q: "360 Bar Budapest Andrássy", lat: 47.5040, lng: 19.0620,
-      why: "גג עם נוף 360° על אנדראשי. בחורף יש בועות שקופות מחוממות לזוגות (מומלץ להזמין)." },
+      why: "גג עם נוף 360° על אנדראשי. בחורף יושבים באיגלו סגור ומחומם, ממש רומנטי. חובה לשריין מקום מראש באתר 360bar.hu." },
     { id: "divino", name: "DiVino Bazilika", he: "דיוינו, בר יין", layer: "food", status: "nice", tags: ["drink","quick"], q: "DiVino Borbár Budapest Bazilika", lat: 47.5005, lng: 19.0535,
       why: "בר יין הונגרי ליד הבזיליקה. טעימות יין בכוסות קטנות. מתאים לפני ארוחת ערב." },
     { id: "doblo", name: "Doblo Wine Bar", he: "דובלו, בר יין ומוזיקה", layer: "food", status: "nice", tags: ["drink","romantic","indoor"], q: "Doblo Wine Bar Budapest", lat: 47.4975, lng: 19.0605,
@@ -135,7 +135,27 @@ window.TRIP = {
       why: "דוכן שטרודל קטן בסמטה צמודה למבצר הדייגים. אופים מול העיניים, מתוק ומלוח. עצירה מושלמת אחרי התצפית בבוקר. (מהרילס)" },
     { id: "lukacs", name: "Lukács Thermal Bath", he: "מרחצאות לוקאץ'", layer: "sights", status: "maybe", tags: ["indoor","rest"], q: "Lukács Gyógyfürdő", lat: 47.5190, lng: 19.0360,
       why: "המרחצאות שהמקומיים בוחרים בהם, פחות תיירותיים מסצ'ני. חלופה אם סצ'ני עמוס מדי. (budapest4t)" },
+    { id: "pichler", name: "Gelateria Pichler", he: "פיכלר, הקירטוש של נדב", layer: "food", status: "must", tags: ["sweet","quick"], q: "Gelateria Pichler Fagyizó Budapest", lat: 47.4990, lng: 19.0540,
+      why: "\"הקירטוש הכי טעים שאכלתי בבודפשט\" לפי נדב בורנשטיין, כנראה הטיקטוק של אדווה. יש בו טעמים כמו פיסטוק, קינמון, קוקוס ונוטלה, וגם גלידה בתוך הקירטוש." },
+    { id: "aleli", name: "Alelí Budapest", he: "אללי, איטלקית של שף מישלן", layer: "food", status: "must", tags: ["romantic","indoor"], q: "Alelí Budapest", lat: 47.5010, lng: 19.0530,
+      why: "מסעדה איטלקית של השף דני גרסיה, בעל 3 כוכבי מישלן. יש בה טאבון ענק, פיצה נפוליטנית בכ-45 ₪, פסטות קאצ'ו א פפה וטירמיסו מטריף. איטלקי טוב במחיר נוח. (נדב בורנשטיין)" },
+    { id: "cookie-beacon", name: "Cookie Beacon Brunch", he: "קוקי ביקון, עוגיות", layer: "food", status: "nice", tags: ["sweet","quick"], q: "Cookie Beacon Brunch Budapest", lat: 47.4975, lng: 19.0590,
+      why: "עוגיות ענק עם מילוי נוטלה. השם מטעה: \"ביקון\" היא רק מילה בשם. (נדב)" },
+    { id: "retro-langos", name: "Retro Lángos Budapest", he: "רטרו לאנגוש", layer: "food", status: "must", tags: ["quick","indoor"], q: "Retro Lángos Budapest", lat: 47.5100, lng: 19.0560,
+      why: "הלאנגוש שהמקומיים אוכלים, עם שמנת, גבינה ושום. הסניף בניוגטי קרוב למלון. (נדב)" },
+    { id: "pampushka", name: "Pampushka", he: "פמפושקה, סופגניות", layer: "food", status: "nice", tags: ["sweet","quick"], q: "Pampushka Budapest", lat: 47.4995, lng: 19.0575,
+      why: "סופגניות ממולאות טריות. נדב אומר שזו ההפתעה הכי גדולה של היום. טוב להפסקת קפה." },
+    { id: "mcd-nyugati", name: "McDonald's Nyugati", he: "מקדונלד'ס בתחנת ניוגטי", layer: "sights", status: "nice", tags: ["quick","indoor"], q: "McDonald's Nyugati tér", lat: 47.5105, lng: 19.0565,
+      why: "נבחר ל\"מקדונלד'ס היפה בעולם\": אולם של תחנת רכבת היסטורית. עוברים להציץ, 10 דק' מהמלון וליד ווסטאנד." },
+    { id: "for-sale", name: "For Sale Pub", he: "בר הפתקים", layer: "food", status: "nice", tags: ["drink","indoor"], q: "For Sale Pub Budapest", lat: 47.4885, lng: 19.0590,
+      why: "פאב שכל הקירות והתקרה שלו מכוסים בפתקים של אורחים. כותבים פתק משלכם. ממש ליד השוק הגדול. (נדב)" },
+    { id: "boatanic", name: "BOATanic Terrace & Bar", he: "בואטניק, בר על הדנובה", layer: "food", status: "must", tags: ["romantic","drink","view"], q: "BOATanic Terrace & Bar Budapest", lat: 47.4995, lng: 19.0475,
+      why: "בר ומסעדה על סיפון ספינה עגונה, עם איגלו מחוממים ונוף לארמון המואר. רומנטי בלי לשוט, אז הפחד מאמסטרדם לא רלוונטי. להזמין דרך הפייסבוק: +36 1 266 9013." },
+    { id: "duchess", name: "The Duchess Rooftop", he: "הדוכסית, רופטופ", layer: "food", status: "nice", tags: ["romantic","drink","view"], q: "The Duchess Rooftop Bar Budapest", lat: 47.4920, lng: 19.0535,
+      why: "בר קוקטיילים על גג עם נוף לגשר אליזבת, מושלם לשקיעה. קוקטייל עולה 50–70 ₪. זה לא מסעדה, ובנשנושים יש נקניקים. הזמנה באתר theduchessbudapest.com." },
     // ===== קניות ושווקים =====
+    { id: "reclaim", name: "ReClaim Vintage", he: "ריקליים וינטג'", layer: "shop", status: "must", tags: ["indoor"], q: "ReClaim Vintage Budapest", lat: 47.4980, lng: 19.0590,
+      why: "חנות וינטג' שנדב קנה בה ג'קט מעולה. בשביל אדווה." },
     { id: "humana", name: "Humana Second Hand", he: "הומנה, יד שנייה", layer: "shop", status: "must", tags: ["indoor"], q: "Humana Second Hand Budapest", lat: 47.4970, lng: 19.0610,
       why: "בשביל אדווה: רשת יד שנייה מסודרת ואיכותית. יש בה גם פריטים חדשים עם תווית. רשתות דומות: Hada, Dorothy and Aby ו-Cream. יש הרבה סניפים, אז גוגל יראה את הקרוב." },
     { id: "skala", name: "Skala", he: "סקאלה, סטוק", layer: "shop", status: "nice", tags: ["indoor"], q: "Skala Budapest Dohány", lat: 47.4955, lng: 19.0600,
@@ -171,7 +191,7 @@ window.TRIP = {
         { time: "15:40", text: "יורדים לטיילת: הנעליים על הגדה ליד הפרלמנט", place: "shoes" },
         { time: "16:15", text: "חוצים את גשר השלשלאות לצד של בודה", place: "chain-bridge" },
         { time: "16:40", text: "הפרלמנט המואר מבטיאני טר, 20 דק' אחרי השקיעה (הטיפ של מאיה)", place: "parliament-view" },
-        { time: "19:30", text: "ארוחת ערב רגועה קרוב למלון. בלי לחץ", place: "mazeltov", alt: ["twentysix"] }
+        { time: "19:30", text: "ארוחת ערב רגועה קרוב למלון. בלי לחץ", place: "mazeltov", alt: ["twentysix","aleli"] }
       ]},
     { date: "2026-11-09", title: "טעימות, שוק ומרחצאות", summary: "יום של אוכל: סיור קולינרי, קניות קלות, ואחר הצהריים מרחצאות חמים.",
       items: [
@@ -182,7 +202,7 @@ window.TRIP = {
         { time: "15:00", text: "מטרו M1 ההיסטורי (הקו הצהוב) לפארק העיר", kind: "move" },
         { time: "15:30", text: "מרחצאות סצ'ני, 2–3 שעות", place: "szechenyi", book: "szechenyi" },
         { time: "18:15", text: "טירת וידהוניאד בחושך ← כיכר הגיבורים", place: "vajdahunyad" },
-        { time: "19:30", text: "קוקטייל על הגג מול הבזיליקה", place: "highnote" },
+        { time: "19:30", text: "קוקטייל על הגג מול הבזיליקה", place: "highnote", alt: ["bar360"], book: "highnote" },
         { time: "20:30", text: "ארוחת ערב כיפית: טעימות בטיים אאוט מרקט", place: "timeout-market", alt: ["comme-chez-soi","bombay"] }
       ]},
     { date: "2026-11-10", title: "עיקול הדנובה", summary: "יום כפרי: סמטאות סנטנדרה, ואחר כך תצפית מיוערת על עיקול הנהר. אם יורד גשם, מחליפים עם יום 4.",
@@ -193,7 +213,7 @@ window.TRIP = {
         { time: "14:00", text: "אוטובוס 880 מתחנת ה-HÉV בסנטנדרה לויסגרד, כ-30–40 דקות (לבדוק שעה בגוגל מפס)", kind: "move" },
         { time: "14:45", text: "מצודת ויסגרד: עלייה רגלית תלולה של כ-40 דק' (לשלומי), או מונית מקומית מהעיירה", place: "visegrad" },
         { time: "16:30", text: "חזרה באוטובוס 880 לבודפשט (Újpest-Városkapu ומשם מטרו M3), כשעה וחצי", kind: "move" },
-        { time: "19:30", text: "בר יין ליד המלון, ואחריו ארוחת ערב רגועה", place: "divino" }
+        { time: "19:00", text: "ערב רומנטי באיגלו על הדנובה, מול הארמון המואר", place: "boatanic", alt: ["divino","aleli"], book: "boatanic" }
       ]},
     { date: "2026-11-11", title: "בודה מלמעלה ורובע יהודי", summary: "התצפיות הגדולות בבוקר, ובערב הארוחה המיוחדת.",
       items: [
@@ -204,7 +224,7 @@ window.TRIP = {
         { time: "13:00", text: "ארוחת צהריים בצד בודה, או נשנוש", kind: "free" },
         { time: "14:30", text: "תצפית מגבעת גלרט (שלומי ברגל, אדווה במונית אם רוצה)", place: "liberty", alt: ["libego"] },
         { time: "16:30", text: "רודאש: ג'קוזי על הגג בשקיעה (אופציונלי)", place: "rudas" },
-        { time: "18:00", text: "רובע יהודי: בית הכנסת מבחוץ, יד שנייה, יין", place: "dohany", alt: ["szputnyik","doblo","london-coffee","rumpus"] },
+        { time: "18:00", text: "רובע יהודי: בית הכנסת מבחוץ, יד שנייה, יין", place: "dohany", alt: ["reclaim","szputnyik","doblo","london-coffee","rumpus","pampushka"] },
         { time: "20:00", text: "הארוחה המיוחדת", place: "borkonyha", alt: ["comme-chez-soi"], anchor: true, book: "special-dinner" }
       ]},
     { date: "2026-11-12", title: "פינוק ויציאה", summary: "בוקר איטי, ספא, ועוד שיטוט אחרון לפני הטיסה.",
@@ -212,8 +232,8 @@ window.TRIP = {
         { time: "09:30", text: "ארוחת בוקר בלי למהר" , place: "hotel" },
         { time: "11:00", text: "צ'ק-אאוט. המזוודות נשארות בשמירה במלון", place: "hotel", kind: "move" },
         { time: "11:30", text: "ספא במלון: עיסוי ובריכה (העוגן של היום)", place: "hotel-spa", anchor: true, book: "hotel-spa" },
-        { time: "14:00", text: "קניות אחרונות או אי מרגיט, לפי החשק", place: "westend", alt: ["margaret","primark","halfprice"] },
-        { time: "16:30", text: "קפה ועוגה אחרונים", place: "gerbeaud", alt: ["central-cafe"] },
+        { time: "14:00", text: "קניות אחרונות: ווסטאנד, ובדרך מציצים במקדונלד'ס של ניוגטי", place: "westend", alt: ["mcd-nyugati","retro-langos","margaret","primark","halfprice"] },
+        { time: "16:30", text: "קירטוש אחרון בפיכלר, או קפה ועוגה", place: "pichler", alt: ["gerbeaud","central-cafe"] },
         { time: "17:45", text: "לוקחים מזוודות ← שדה התעופה", place: "hotel", kind: "move", book: "transfer" },
         { time: "20:40", text: "המראה (אל על LY2368). נחיתה 00:50", kind: "flight" }
       ]}
@@ -228,6 +248,10 @@ window.TRIP = {
       note: "תקציב 150–250€ לזוג. שתי אפשרויות: בורקוניה (מישלן, הונגרית מודרנית) או Comme Chez Soi (איטלקית אינטימית). לציין את המגבלות בהזמנה." },
     { id: "transfer", title: "הסעה מהשדה ובחזרה", when: "8.11 11:15 / 12.11 17:45", urgency: "mid",
       note: "ההמלצה שלי: בהגעה Bolt או מונית רשמית מהדלפק בשדה, כ-30–40 דק' עם מזוודות עד הדלת. בחזרה: אוטובוס 100E מכיכר דאק, 7 דק' הליכה מהמלון, ישר לטרמינל תוך כחצי שעה. זה גם הכי זול (לפי בר, כ-25 ₪ לאדם). אין צורך להזמין מראש." },
+    { id: "boatanic", title: "איגלו בבואטניק", when: "10.11 19:00", urgency: "mid",
+      note: "להזמין דרך דף הפייסבוק או בטלפון +36 1 266 9013. לבקש איגלו עם נוף לארמון." },
+    { id: "highnote", title: "שולחן ב-High Note", when: "9.11 19:30", urgency: "mid",
+      note: "להזמין באתר highnoteskybar.hu, ולבקש את החלק המקורה עם הנוף לבזיליקה." },
     { id: "mazeltov", title: "שולחן במזל טוב", when: "8.11 19:30", urgency: "mid",
       note: "BudaBest ממליצים מאוד להזמין מראש. לבקש שולחן בחצר." },
     { id: "basilica", title: "כרטיס משולב לבזיליקה ולתצפית", when: "8.11 15:00", urgency: "low",
@@ -276,7 +300,11 @@ window.TRIP = {
     { title: "שוק האיכרים בשימפלה בימי ראשון", verdict: "yes", note: "יוצא בדיוק ביום ההגעה, אז הוא ארוחת הצהריים הראשונה שלכם." },
     { title: "budapest4t: 13 טעויות", verdict: "yes", note: "נוספו טיפים על תיקוף כרטיסים, ציוד למרחצאות ו-Budapest Card, ומרחצאות לוקאץ' נכנסו כחלופה." },
     { title: "ג'מיני: סיור קולינרי מותאם", verdict: "yes", note: "נוסח הבקשה למדריך (חלבי ← פרווה ← בשרי) נכנס להזמנת הסיור." },
-    { title: "שאר הרילס", verdict: "pending", note: "ממתינים לצילומי מסך, אם יש עוד." }
+    { title: "נדב בורנשטיין: 24 שעות בבודפשט (הסרטון)", verdict: "yes", note: "נוספו קוקי ביקון, רטרו לאנגוש, פמפושקה, ריקליים וינטג' ומקדונלד'ס ניוגטי. טוונטיסיקס ואללי כבר היו." },
+    { title: "נדב: הקירטוש של פיכלר", verdict: "yes", note: "זה כנראה הטיקטוק של אדווה. נכנס ליום האחרון." },
+    { title: "נדב: אללי ובר הפתקים", verdict: "yes", note: "אללי נכנסה כחלופה לארוחות ערב." },
+    { title: "עדי: בואטניק, בר 360, High Note, הדוכסית", verdict: "yes", note: "בואטניק הוא ערב יום 3, רומנטי ובלי שייט. נוספו הזמנות ל-High Note ולבואטניק." },
+    { title: "שאר הרילס", verdict: "pending", note: "אם נשאר עוד, שלחו." }
   ],
 
   emergency: [
