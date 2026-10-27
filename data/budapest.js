@@ -80,7 +80,7 @@ window.TRIP = {
     { id: "central-cafe", name: "Centrál Kávéház", he: "קפה סנטרל", layer: "food", status: "nice", tags: ["sweet","indoor","rest"], q: "Centrál Kávéház Budapest", lat: 47.4920, lng: 19.0560,
       why: "בית קפה ספרותי משנת 1887. אותה אווירה של פעם, בלי התורים של ניו יורק קפה." },
     { id: "newyork", name: "New York Café", he: "ניו יורק קפה", layer: "maybe", status: "maybe", tags: ["sweet","indoor","romantic"], q: "New York Café Budapest", lat: 47.4985, lng: 19.0710,
-      why: "\"בית הקפה היפה בעולם\". מאוד תיירותי, ויש תור בלי הזמנה. אם רוצים, מזמינים מקום מראש לשעה קבועה." },
+      why: "\"בית הקפה היפה בעולם\". מאוד תיירותי. לפי הרילס של מאיה, בצהריים התור ארוך: מגיעים בפתיחה בבוקר, או מזמינים מקום מראש." },
     { id: "highnote", name: "High Note SkyBar", he: "הבר על הגג High Note", layer: "food", status: "must", tags: ["romantic","drink","view"], q: "High Note SkyBar Budapest", lat: 47.5010, lng: 19.0525,
       why: "בר קוקטיילים על הגג, מול הכיפה של הבזיליקה, 5 דקות מהמלון. מושלם לשקיעה או לסוף הערב." },
     { id: "bar360", name: "360 Bar", he: "בר 360", layer: "food", status: "nice", tags: ["romantic","drink","view"], q: "360 Bar Budapest Andrássy", lat: 47.5040, lng: 19.0620,
@@ -91,6 +91,29 @@ window.TRIP = {
       why: "בר יין עם קירות לבנים ונרות ברובע היהודי. יש מוזיקה חיה בשקט יחסי: טוב לאדווה וגם לשלומי." },
     { id: "szimpla", name: "Szimpla Kert", he: "שימפלה, בר חורבות", layer: "maybe", status: "maybe", tags: ["drink"], q: "Szimpla Kert Budapest", lat: 47.4970, lng: 19.0633,
       why: "בר החורבות המפורסם. בערב צפוף ורועש, אבל ביום ראשון בבוקר יש בו שוק איכרים (לבדוק שעות): אולי ביום ההגעה." },
+
+
+    // ===== מהרילס שאספתם =====
+    { id: "twentysix", name: "Twentysix", he: "טוונטיסיקס, ג'ונגל עירוני", layer: "food", status: "must", tags: ["romantic","indoor"], q: "Twentysix Budapest Király utca 26", lat: 47.4985, lng: 19.0605,
+      why: "חצר מקורה מלאה עצים וצמחים טרופיים. בבוקר בראנץ', ובערב מזה ים-תיכוני לשיתוף. מאוד יפה ונעים לזוג. (מהרילס \"15 דברים לעשות\")" },
+    { id: "rumpus", name: "Rumpus Tiki Bar", he: "בר טיקי", layer: "food", status: "nice", tags: ["drink","indoor"], q: "Rumpus Tiki Bar Budapest Király utca 19", lat: 47.4982, lng: 19.0598,
+      why: "בר קוקטיילים טרופי עם קש, רשתות ופנסים צבעוניים. כנראה זה הבר מהרילס של רגינה. פתוח מ-17:00. לפעמים יש מוזיקה חיה, אז כדאי להציץ קודם." },
+    { id: "vicky", name: "Vicky Barcelona", he: "ויקי ברצלונה, טאפאס", layer: "food", status: "maybe", tags: ["drink","indoor"], q: "Vicky Barcelona Budapest Gozsdu", lat: 47.4980, lng: 19.0585,
+      why: "בר טאפאס ספרדי בחצרות גוזדו. שימו לב: בטאפאס יש הרבה חמון ונקניקים (חזיר) ופירות ים, אז צריך לבחור מנות בזהירות. (מהרילס של רגינה)" },
+    { id: "london-coffee", name: "London Coffee Society", he: "לונדון קופי סוסייטי", layer: "food", status: "nice", tags: ["sweet","rest","quick"], q: "London Coffee Society Budapest", lat: 47.4990, lng: 19.0620,
+      why: "בית קפה קטן ברובע היהודי עם קפה מעולה וארוחות בוקר. מתאים לעצירת קפה בשיטוט. (המלצה של יאנוש, \"ההונגרי\")" },
+    { id: "marrakesh", name: "Marrakesh", he: "מרקש, מסעדה מרוקאית", layer: "maybe", status: "maybe", tags: ["indoor"], q: "Marrakesh restaurant Budapest", lat: 47.4975, lng: 19.0620,
+      why: "מסעדה מרוקאית מהסרטון של משפחת בנאי, בשילוט יש גם עברית. לבדוק בכרטיס של גוגל אם היא כשרה ומה שעות הפתיחה." },
+    { id: "levendula", name: "Levendula ice cream", he: "גלידת לבנדולה", layer: "food", status: "nice", tags: ["sweet","quick"], q: "Levendula Kézműves Fagylaltozó Vámház körút", lat: 47.4878, lng: 19.0590,
+      why: "גלידה בעבודת יד עם טעמים כמו לבנדר. יש סניף ליד השוק הגדול. (מהרילס של ליאת על סנטנדרה)" },
+    { id: "edeni", name: "Sweets Shop of Eden, Szentendre", he: "עדני: שוקולד בסנטנדרה", layer: "food", status: "must", tags: ["sweet","indoor"], q: "Sweets Shop of Eden Szentendre", lat: 47.6690, lng: 19.0750,
+      why: "חנות שוקולדים בסנטנדרה. ליאת ממליצה בעיקר על השוקו החם. עצירה מושלמת ביום קר. (מהרילס של ליאת)" },
+    { id: "library", name: "Metropolitan Ervin Szabó Library", he: "ספריית ארווין סבו", layer: "sights", status: "maybe", tags: ["indoor","quick"], q: "Metropolitan Ervin Szabó Library Budapest", lat: 47.4893, lng: 19.0640,
+      why: "חדרי קריאה היסטוריים בארמון ישן. ביקור קצר של 20–30 דקות, יפה מאוד ובלי תורים. טוב ליום גשום. (מהרילס \"15 דברים\")" },
+    { id: "night-cruise", name: "Evening Danube sightseeing cruise", he: "שייט ערב קצר בדנובה", layer: "maybe", status: "maybe", tags: ["romantic","view"], q: "Legenda City Cruises Budapest Vigadó tér", lat: 47.4960, lng: 19.0480,
+      why: "מופיע בשלושה רילס שונים. אחרי אמסטרדם הבנתי שאתה חושש, אז אם בכלל: רק שייט קצר של שעה בחושך, בלי ארוחה, כשהפרלמנט והמבצר מוארים. החלטה שלכם." },
+    { id: "fashion-street", name: "Fashion Street (Deák Ferenc utca)", he: "רחוב האופנה", layer: "shop", status: "nice", tags: ["quick"], q: "Fashion Street Budapest Deák Ferenc utca", lat: 47.4972, lng: 19.0525,
+      why: "רחוב אופנה קצר בין כיכר דאק לוורשמרטי. ברילס של רגינה יש בו נעלי עקב מוארות של חג המולד, אבל ייתכן שהקישוטים עוד לא יעלו בתאריכים שלכם." },
 
     // ===== קניות ושווקים =====
     { id: "vaci", name: "Váci utca", he: "רחוב ואצי", layer: "shop", status: "nice", tags: ["quick"], q: "Váci utca Budapest", lat: 47.4930, lng: 19.0530,
@@ -118,12 +141,13 @@ window.TRIP = {
         { time: "16:00", text: "יורדים לטיילת: הנעליים על הגדה ← הפרלמנט בשקיעה (כ-16:20)", place: "shoes" },
         { time: "16:45", text: "חוצים את גשר השלשלאות כשהאורות נדלקים", place: "chain-bridge" },
         { time: "17:15", text: "הפרלמנט המואר מהגדה של בודה", place: "parliament-view" },
-        { time: "19:30", text: "ארוחת ערב רגועה קרוב למלון. בלי לחץ", place: "mazeltov" }
+        { time: "19:30", text: "ארוחת ערב רגועה קרוב למלון. בלי לחץ", place: "mazeltov", alt: ["twentysix"] }
       ]},
     { date: "2026-11-09", title: "טעימות, שוק ומרחצאות", summary: "יום של אוכל: סיור קולינרי, קניות קלות, ואחר הצהריים מרחצאות חמים.",
       items: [
         { time: "10:00", text: "סיור קולינרי מותאם (העוגן של היום)", place: "market-hall", anchor: true, book: "food-tour" },
-        { time: "13:30", text: "שיטוט וקניות ברחוב ואצי", place: "vaci" },
+        { time: "13:15", text: "גלידה ליד השוק", place: "levendula" },
+        { time: "13:30", text: "שיטוט וקניות ברחוב ואצי ורחוב האופנה", place: "vaci", alt: ["fashion-street"] },
         { time: "15:00", text: "מטרו M1 ההיסטורי (הקו הצהוב) לפארק העיר", kind: "move" },
         { time: "15:30", text: "מרחצאות סצ'ני, 2–3 שעות", place: "szechenyi", book: "szechenyi" },
         { time: "18:15", text: "טירת וידהוניאד בחושך ← כיכר הגיבורים", place: "vajdahunyad" },
@@ -133,7 +157,7 @@ window.TRIP = {
     { date: "2026-11-10", title: "עיקול הדנובה", summary: "יום כפרי: סמטאות סנטנדרה, ואחר כך תצפית מיוערת על עיקול הנהר. אם יורד גשם, מחליפים עם יום 4.",
       items: [
         { time: "10:00", text: "רכבת HÉV H5 מבטיאני טר לסנטנדרה, כ-40 דקות", kind: "move", place: "parliament-view" },
-        { time: "10:45", text: "שיטוט בסנטנדרה, קפה ומאפה", place: "szentendre" },
+        { time: "10:45", text: "שיטוט בסנטנדרה: סמטאות, פפריקה ושוקו חם בעדני", place: "edeni" },
         { time: "12:30", text: "ארוחת צהריים בסנטנדרה", place: "szentendre" },
         { time: "14:00", text: "אוטובוס 880 מתחנת ה-HÉV בסנטנדרה לויסגרד, כ-30–40 דקות (לבדוק שעה בגוגל מפס)", kind: "move" },
         { time: "14:45", text: "מצודת ויסגרד: עלייה רגלית תלולה של כ-40 דק' (לשלומי), או מונית מקומית מהעיירה", place: "visegrad" },
@@ -148,7 +172,7 @@ window.TRIP = {
         { time: "13:00", text: "ארוחת צהריים בצד בודה, או נשנוש", kind: "free" },
         { time: "14:30", text: "תצפית מגבעת גלרט (שלומי ברגל, אדווה במונית אם רוצה)", place: "liberty" },
         { time: "16:30", text: "רודאש: ג'קוזי על הגג בשקיעה (אופציונלי)", place: "rudas" },
-        { time: "18:00", text: "רובע יהודי: בית הכנסת מבחוץ, יד שנייה, יין", place: "dohany", alt: ["szputnyik","doblo"] },
+        { time: "18:00", text: "רובע יהודי: בית הכנסת מבחוץ, יד שנייה, יין", place: "dohany", alt: ["szputnyik","doblo","london-coffee","rumpus"] },
         { time: "20:00", text: "הארוחה המיוחדת", place: "borkonyha", anchor: true, book: "special-dinner" }
       ]},
     { date: "2026-11-12", title: "פינוק ויציאה", summary: "בוקר איטי, ספא, ועוד שיטוט אחרון לפני הטיסה.",
@@ -165,7 +189,7 @@ window.TRIP = {
 
   bookings: [
     { id: "food-tour", title: "סיור קולינרי בעברית", when: "9.11 בבוקר", urgency: "high",
-      note: "מועמדים: \"קריוטוש\" (מוזכרים במטייל), משפחת בנאי (הקישור מהקבוצה) וסיטיול. לשלוח לשניים הודעה עכשיו. לבקש בכתב: בלי חזיר ושומן חזיר (zsír), בלי פירות ים, בלי בשר וחלב יחד, ובלי פול לאדווה. גיבוי באנגלית: Taste Hungary, סיור מטבח ותרבות יהודית (4 שעות, כל יום ב-11:00)." },
+      note: "מועמד ראשון: budapest4t, סיור קולינרי בעברית מהצילום ששלחת (כפתור \"הזמינו סיור\" באתר, או וואטסאפ). עוד מועמדים: \"קריוטוש\", משפחת בנאי וסיטיול. לשלוח לשניים הודעה עכשיו. לבקש בכתב: בלי חזיר ושומן חזיר (zsír), בלי פירות ים, בלי בשר וחלב יחד, ובלי פול לאדווה. גיבוי באנגלית: Taste Hungary, סיור מטבח ותרבות יהודית (4 שעות, כל יום ב-11:00)." },
     { id: "hotel-spa", title: "טיפול בספא המלון ושימוש אחרי הצ'ק-אאוט", when: "12.11, 11:30", urgency: "high",
       note: "לשאול את המלון: אילו טיפולים יש, האם יש עיסוי זוגי, ואם אפשר להשתמש בבריכה ובספא אחרי 11:00. לבקש גם שמירת מזוודות." },
     { id: "special-dinner", title: "הארוחה המיוחדת", when: "11.11, 20:00", urgency: "high",
@@ -192,7 +216,15 @@ window.TRIP = {
     { title: "מסעדת טוקיו ליד הפרלמנט", verdict: "no", note: "יפנית, עם הרבה פירות ים. החלטתם לוותר." },
     { title: "הקירטוש הכי טעים (טיקטוק)", verdict: "partial", note: "לא נפתח. הוספתי בינתיים את מולנאר. מה היה השם בסרטון?" },
     { title: "מאמרי מדריך: טעויות, בטיחות, קניות", verdict: "yes", note: "הטיפים נכנסו למסך הטיפים." },
-    { title: "כ-75 רילס ופוסטים מפייסבוק וטיקטוק", verdict: "pending", note: "לא נפתחים בלי התחברות. אפשר לשלוח צילום מסך או שם של מקום, ואבדוק." }
+    { title: "budapest4t: סיור קולינרי בעברית", verdict: "yes", note: "המועמד הראשון לסיור של 9.11." },
+    { title: "רילס \"15 דברים לעשות בבודפשט\"", verdict: "yes", note: "רוב המקומות כבר היו במסלול. נוספו: טוונטיסיקס וספריית ארווין סבו." },
+    { title: "רגינה: ויקי ברצלונה, בר טיקי, רחוב האופנה", verdict: "partial", note: "שלושתם נוספו. בויקי ברצלונה צריך להיזהר מחזיר ומפירות ים." },
+    { title: "בר: שייט לילי בדנובה", verdict: "partial", note: "נכנס ל\"אולי\", בגרסה של שעה בלי ארוחה." },
+    { title: "ליאת: סנטנדרה, עדני ולבנדולה", verdict: "yes", note: "נכנסו ליום 3 וליום 2." },
+    { title: "יאנוש: לונדון קופי ותפריט צהריים", verdict: "yes", note: "בית הקפה נכנס למפה, והטיפ נכנס לרשימת הטיפים." },
+    { title: "בנאי: מרקש", verdict: "partial", note: "נכנסה ל\"אולי\". צריך לבדוק כשרות." },
+    { title: "מאיה: ניו יורק קפה", verdict: "yes", note: "נוסף הטיפ על התור בצהריים." },
+    { title: "שאר הרילס (בערך 65)", verdict: "pending", note: "ממתינים לצילומי מסך." }
   ],
 
   emergency: [
@@ -211,6 +243,7 @@ window.TRIP = {
     { t: "תשלום בכרטיס", d: "כשמסוף התשלום או הכספומט מציע לחייב ביורו או בשקלים, בוחרים בפורינט (HUF). ההמרה שלהם יקרה יותר. עדיף להימנע מכספומטים של Euronet." },
     { t: "מוניות", d: "רק Bolt או מונית רשמית (צהובה, עם שלט ומונה). לא עולים למונית שמציעה את עצמה ברחוב." },
     { t: "מלכודות תיירים", d: "מסעדות על רחוב ואצי ומול האתרים הגדולים יקרות ולרוב בינוניות. אוכלים רחוב או שניים משם." },
+    { t: "תפריט צהריים", d: "בימי חול, בערך מ-11:30 עד 15:00, הרבה מסעדות מגישות תפריט צהריים (napi menü / lunch menu) של 2–3 מנות במחיר נמוך בהרבה. (הטיפ של יאנוש)" },
     { t: "כייסים", d: "בחשמלית 2, במטרו ובאזורים הצפופים: טלפון וארנק בכיס קדמי." },
     { t: "שקיעה מוקדמת", d: "בנובמבר השמש שוקעת בסביבות 16:20. התצפיות הכי יפות בין 15:30 ל-17:00, ובערב העיר מוארת." }
   ]

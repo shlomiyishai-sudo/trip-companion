@@ -200,7 +200,7 @@ function pickTips(d) {
   const out = [t[0], t[1]];
   if (ids.includes("szechenyi") || ids.includes("rudas")) out.push(t[5]);
   if (d.date === T.end) out.push(t[4]);
-  out.push(t[t.length-1]); if (day === 0) out.push(t[3], t[2], t[7], t[8]); if (day === 1) out.push(t[9]); if (day === 2) out.push(t[6]);
+  out.push(t[t.length-1]); if (day === 0) out.push(t[3], t[2], t[7], t[8]); if (day === 1) out.push(t.find(x=>x.t==="תפריט צהריים")); if (day === 2) out.push(t[6]);
   return out;
 }
 document.addEventListener("click", e => { const b = e.target.closest("[data-place]"); if (b && !b.disabled) openPlace(P[b.dataset.place]); });
