@@ -26,7 +26,7 @@ window.TRIP = {
 
     // ===== אטרקציות, תצפיות וספא =====
     { id: "parliament-view", name: "Parliament view from Batthyány tér", he: "הפרלמנט מהגדה של בודה", layer: "sights", status: "must", tags: ["view","romantic"], q: "Batthyány tér Budapest", lat: 47.5068, lng: 19.0389,
-      why: "הזווית הכי יפה על הפרלמנט, בלי להיכנס ובלי תורים. בשקיעה ובערב, כשהבניין מואר, זה אחד הרגעים הרומנטיים של העיר." },
+      why: "הזווית הכי יפה על הפרלמנט, בלי להיכנס ובלי תורים. לפי מאיה, התמונה הכי טובה יוצאת כ-20 דקות אחרי השקיעה, כשהבניין כבר מואר והשמיים עוד כחולים." },
     { id: "parliament", name: "Hungarian Parliament Building", he: "בניין הפרלמנט", layer: "sights", status: "nice", tags: ["view"], q: "Hungarian Parliament Building", lat: 47.5071, lng: 19.0457,
       why: "מרשים מבחוץ ומקרוב. הסיור בפנים מודרך ודורש כרטיס מראש. לפי מה שכתבתם, מספיק לעבור לידו." },
     { id: "shoes", name: "Shoes on the Danube Bank", he: "הנעליים על גדת הדנובה", layer: "sights", status: "must", tags: ["quick"], q: "Shoes on the Danube Bank", lat: 47.5045, lng: 19.0450,
@@ -34,7 +34,7 @@ window.TRIP = {
     { id: "chain-bridge", name: "Széchenyi Chain Bridge", he: "גשר השלשלאות", layer: "sights", status: "must", tags: ["view","romantic"], q: "Széchenyi Chain Bridge", lat: 47.4990, lng: 19.0438,
       why: "חוצים ברגל, בעיקר בערב כשהגשר והמבצר מוארים. סגור לרכבים, כך שההליכה נעימה." },
     { id: "bastion", name: "Fisherman's Bastion", he: "מבצר הדייגים", layer: "sights", status: "must", tags: ["view","romantic"], q: "Fisherman's Bastion", lat: 47.5022, lng: 19.0348,
-      why: "התצפית המפורסמת על הפרלמנט והדנובה. הקומה התחתונה חינם. כדאי להגיע לפני 11:00, לפני שהקבוצות מגיעות." },
+      why: "התצפית המפורסמת על הפרלמנט והדנובה. הקומה התחתונה חינם ופחות עמוסה. עולים באוטובוס 16 מכיכר דאק, ומגיעים לפני 11:00, לפני הקבוצות. (מאיה)" },
     { id: "matthias", name: "Matthias Church", he: "כנסיית מתיאש", layer: "sights", status: "nice", tags: ["quick"], q: "Matthias Church Budapest", lat: 47.5019, lng: 19.0342,
       why: "גג הרעפים הצבעוני צמוד למבצר הדייגים. מתרשמים מבחוץ וממשיכים." },
     { id: "castle", name: "Buda Castle", he: "ארמון בודה", layer: "sights", status: "must", tags: ["view"], q: "Buda Castle", lat: 47.4961, lng: 19.0396,
@@ -42,7 +42,7 @@ window.TRIP = {
     { id: "liberty", name: "Liberty Statue, Gellért Hill", he: "גבעת גלרט ופסל החירות", layer: "sights", status: "must", tags: ["view"], q: "Liberty Statue Budapest", lat: 47.4867, lng: 19.0472,
       why: "התצפית הכי רחבה על העיר. עלייה של כ-20–30 דקות, מתאימה לשלומי. לאדווה יש אפשרות לעלות במונית ולהיפגש למעלה." },
     { id: "basilica", name: "St. Stephen's Basilica", he: "בזיליקת סנט סטפן", layer: "sights", status: "nice", tags: ["view","quick"], q: "St. Stephen's Basilica", lat: 47.5009, lng: 19.0539,
-      why: "חמש דקות הליכה מהמלון. החזית והכיכר מרשימות. מרפסת הכיפה (יש מעלית) היא תצפית 360° קצרה, ולרוב בלי תור ארוך." },
+      why: "חמש דקות הליכה מהמלון. כדאי לקנות אונליין כרטיס משולב עם התצפית הפנורמית מהכיפה (360° על כל העיר). את הכרטיס מממשים בדלפק כ-50 מ' מהכניסה, בלי תור. הכי שקט ב-9:00. אחרי המעלית יש עוד כ-20 מדרגות. (BudaBest)" },
     { id: "opera", name: "Hungarian State Opera", he: "בית האופרה", layer: "sights", status: "nice", tags: ["quick"], q: "Hungarian State Opera House", lat: 47.5027, lng: 19.0584,
       why: "על שדרות אנדראשי, ממש ליד המלון. מצטלמים בחזית וממשיכים." },
     { id: "dohany", name: "Dohány Street Synagogue", he: "בית הכנסת ברחוב דוהאני", layer: "sights", status: "must", tags: ["quick"], q: "Dohány Street Synagogue", lat: 47.4960, lng: 19.0607,
@@ -66,11 +66,11 @@ window.TRIP = {
 
     // ===== אוכל, קפה וברים =====
     { id: "market-hall", name: "Great Market Hall", he: "השוק הגדול", layer: "food", status: "must", tags: ["indoor"], q: "Great Market Hall Budapest", lat: 47.4870, lng: 19.0583,
-      why: "השוק המקורה ההיסטורי. בקומה הראשונה פפריקה, יין ומעדנים; למעלה לאנגוש ודוכני אוכל. סגור בימי ראשון." },
+      why: "השוק המקורה ההיסטורי. בקומה הראשונה פפריקה, יין ומעדנים; למעלה לאנגוש ודוכני אוכל, אבל לפי מאיה הקומה העליונה תיירותית ויקרה. סגור בימי ראשון." },
     { id: "karavan", name: "Karaván street food", he: "קרוואן, אוכל רחוב", layer: "food", status: "nice", tags: ["quick"], q: "Karaván Street Food Budapest", lat: 47.4977, lng: 19.0627,
       why: "חצר של משאיות אוכל ברובע היהודי. מגוון, מהיר וזול: טוב לנשנוש בין הליכות." },
     { id: "mazeltov", name: "Mazel Tov", he: "מזל טוב", layer: "food", status: "nice", tags: ["romantic","indoor"], q: "Mazel Tov Budapest Akácfa", lat: 47.5005, lng: 19.0640,
-      why: "מסעדה ים-תיכונית וישראלית בחצר מקורה מלאה צמחייה ואורות. אווירה יפה לערב, ותפריט שקל להתאים למגבלות." },
+      why: "מסעדה ים-תיכונית וישראלית בחצר מקורה מלאה צמחייה ואורות, ב-Akácfa utca 47. BudaBest ממליצים עליה לדייט רומנטי. פתוחה מ-12:00, ומומלץ מאוד להזמין שולחן מראש." },
     { id: "borkonyha", name: "Borkonyha Winekitchen", he: "בורקוניה, מטבח ויין", layer: "food", status: "maybe", tags: ["romantic","indoor","drink"], q: "Borkonyha Winekitchen Budapest", lat: 47.4995, lng: 19.0510,
       why: "מועמדת לארוחה המיוחדת: מטבח הונגרי מודרני עם כוכב מישלן ורשימת יינות הונגריים ענקית. להזמין מראש, ולבקש מראש התאמה למגבלות." },
     { id: "molnars", name: "Molnár's Kürtőskalács", he: "קירטוש מולנאר", layer: "food", status: "nice", tags: ["sweet","quick"], q: "Molnár's Kürtőskalács Váci utca", lat: 47.4920, lng: 19.0545,
@@ -112,6 +112,10 @@ window.TRIP = {
       why: "חדרי קריאה היסטוריים בארמון ישן. ביקור קצר של 20–30 דקות, יפה מאוד ובלי תורים. טוב ליום גשום. (מהרילס \"15 דברים\")" },
     { id: "night-cruise", name: "Evening Danube sightseeing cruise", he: "שייט ערב קצר בדנובה", layer: "maybe", status: "maybe", tags: ["romantic","view"], q: "Legenda City Cruises Budapest Vigadó tér", lat: 47.4960, lng: 19.0480,
       why: "מופיע בשלושה רילס שונים. אחרי אמסטרדם הבנתי שאתה חושש, אז אם בכלל: רק שייט קצר של שעה בחושך, בלי ארוחה, כשהפרלמנט והמבצר מוארים. החלטה שלכם." },
+    { id: "libego", name: "Zugliget Chairlift (Libegő)", he: "הרכבל הפתוח בגבעות בודה", layer: "sights", status: "nice", tags: ["view"], q: "Zugligeti Libegő", lat: 47.5163, lng: 18.9740,
+      why: "רכבל כיסאות פתוח שעולה ביער לגבעת יאנוש, ומשם מגדל התצפית אליזבת עם אחת התצפיות היפות על בודפשט. טבע ושקט בתוך העיר, כ-40 דק' מהמלון. בנובמבר נסגר מוקדם ולא עובד ברוח חזקה, אז לבדוק בכרטיס. (BudaBest)" },
+    { id: "halfprice", name: "HalfPrice", he: "האלף פרייס, אופנה בהנחה", layer: "shop", status: "nice", tags: ["indoor"], q: "HalfPrice Budapest", lat: 47.5125, lng: 19.0590,
+      why: "רשת אופנה ונעליים של מותגים בהנחה. בגדים ונעליים, כמו שביקשתם. הסניף הקרוב יתעדכן מגוגל." },
     { id: "fashion-street", name: "Fashion Street (Deák Ferenc utca)", he: "רחוב האופנה", layer: "shop", status: "nice", tags: ["quick"], q: "Fashion Street Budapest Deák Ferenc utca", lat: 47.4972, lng: 19.0525,
       why: "רחוב אופנה קצר בין כיכר דאק לוורשמרטי. ברילס של רגינה יש בו נעלי עקב מוארות של חג המולד, אבל ייתכן שהקישוטים עוד לא יעלו בתאריכים שלכם." },
 
@@ -137,10 +141,10 @@ window.TRIP = {
         { time: "11:15", text: "נחיתה ב-BUD (אל על LY2369)", kind: "flight" },
         { time: "12:15", text: "מונית או הסעה למלון, בערך 30–40 דקות. משאירים מזוודות (הצ'ק-אין מ-14:00)", place: "hotel", kind: "move", book: "transfer" },
         { time: "13:00", text: "ארוחת צהריים קלה ברובע היהודי", place: "karavan", alt: ["szimpla"] },
-        { time: "15:00", text: "הבזיליקה מבחוץ, ואם בא: מרפסת הכיפה", place: "basilica" },
-        { time: "16:00", text: "יורדים לטיילת: הנעליים על הגדה ← הפרלמנט בשקיעה (כ-16:20)", place: "shoes" },
-        { time: "16:45", text: "חוצים את גשר השלשלאות כשהאורות נדלקים", place: "chain-bridge" },
-        { time: "17:15", text: "הפרלמנט המואר מהגדה של בודה", place: "parliament-view" },
+        { time: "15:00", text: "הבזיליקה: הכיפה הפנורמית (כרטיס משולב אונליין)", place: "basilica", book: "basilica" },
+        { time: "15:40", text: "יורדים לטיילת: הנעליים על הגדה ליד הפרלמנט", place: "shoes" },
+        { time: "16:15", text: "חוצים את גשר השלשלאות לצד של בודה", place: "chain-bridge" },
+        { time: "16:40", text: "הפרלמנט המואר מבטיאני טר, 20 דק' אחרי השקיעה (הטיפ של מאיה)", place: "parliament-view" },
         { time: "19:30", text: "ארוחת ערב רגועה קרוב למלון. בלי לחץ", place: "mazeltov", alt: ["twentysix"] }
       ]},
     { date: "2026-11-09", title: "טעימות, שוק ומרחצאות", summary: "יום של אוכל: סיור קולינרי, קניות קלות, ואחר הצהריים מרחצאות חמים.",
@@ -170,7 +174,7 @@ window.TRIP = {
         { time: "10:20", text: "מבצר הדייגים לפני הקבוצות", place: "bastion" },
         { time: "10:50", text: "כנסיית מתיאש מבחוץ ← שיטוט בחצרות הארמון", place: "castle" },
         { time: "13:00", text: "ארוחת צהריים בצד בודה, או נשנוש", kind: "free" },
-        { time: "14:30", text: "תצפית מגבעת גלרט (שלומי ברגל, אדווה במונית אם רוצה)", place: "liberty" },
+        { time: "14:30", text: "תצפית מגבעת גלרט (שלומי ברגל, אדווה במונית אם רוצה)", place: "liberty", alt: ["libego"] },
         { time: "16:30", text: "רודאש: ג'קוזי על הגג בשקיעה (אופציונלי)", place: "rudas" },
         { time: "18:00", text: "רובע יהודי: בית הכנסת מבחוץ, יד שנייה, יין", place: "dohany", alt: ["szputnyik","doblo","london-coffee","rumpus"] },
         { time: "20:00", text: "הארוחה המיוחדת", place: "borkonyha", anchor: true, book: "special-dinner" }
@@ -180,7 +184,7 @@ window.TRIP = {
         { time: "09:30", text: "ארוחת בוקר בלי למהר" , place: "hotel" },
         { time: "11:00", text: "צ'ק-אאוט. המזוודות נשארות בשמירה במלון", place: "hotel", kind: "move" },
         { time: "11:30", text: "ספא במלון: עיסוי ובריכה (העוגן של היום)", place: "hotel-spa", anchor: true, book: "hotel-spa" },
-        { time: "14:00", text: "קניות אחרונות או אי מרגיט, לפי החשק", place: "westend", alt: ["margaret","primark"] },
+        { time: "14:00", text: "קניות אחרונות או אי מרגיט, לפי החשק", place: "westend", alt: ["margaret","primark","halfprice"] },
         { time: "16:30", text: "קפה ועוגה אחרונים", place: "gerbeaud", alt: ["central-cafe"] },
         { time: "17:45", text: "לוקחים מזוודות ← שדה התעופה", place: "hotel", kind: "move", book: "transfer" },
         { time: "20:40", text: "המראה (אל על LY2368). נחיתה 00:50", kind: "flight" }
@@ -195,7 +199,11 @@ window.TRIP = {
     { id: "special-dinner", title: "הארוחה המיוחדת", when: "11.11, 20:00", urgency: "high",
       note: "תקציב 150–250€ לזוג. לציין את המגבלות בהזמנה." },
     { id: "transfer", title: "הסעה מהשדה ובחזרה", when: "8.11 11:15 / 12.11 17:45", urgency: "mid",
-      note: "Bolt או מונית רשמית (Főtaxi) מהדלפק בשדה, או הסעה פרטית מוזמנת. ההמלצה תגיע בקרוב." },
+      note: "ההמלצה שלי: בהגעה Bolt או מונית רשמית מהדלפק בשדה, כ-30–40 דק' עם מזוודות עד הדלת. בחזרה: אוטובוס 100E מכיכר דאק, 7 דק' הליכה מהמלון, ישר לטרמינל תוך כחצי שעה. זה גם הכי זול (לפי בר, כ-25 ₪ לאדם). אין צורך להזמין מראש." },
+    { id: "mazeltov", title: "שולחן במזל טוב", when: "8.11 19:30", urgency: "mid",
+      note: "BudaBest ממליצים מאוד להזמין מראש. לבקש שולחן בחצר." },
+    { id: "basilica", title: "כרטיס משולב לבזיליקה ולתצפית", when: "8.11 15:00", urgency: "low",
+      note: "קונים אונליין, ובכרטיס המשולב התצפית הפנורמית כלולה. מממשים בדלפק כ-50 מ' מהכניסה, בלי תור." },
     { id: "szechenyi", title: "כרטיסי סצ'ני עם תא פרטי", when: "9.11 אחה\"צ", urgency: "low",
       note: "קונים באתר הרשמי של המרחצאות. תא פרטי נוח יותר מלוקר." },
     { id: "danube-plan", title: "לוח זמנים לעיקול הדנובה (בלי הזמנה)", when: "ערב 9.11", urgency: "low",
@@ -224,7 +232,12 @@ window.TRIP = {
     { title: "יאנוש: לונדון קופי ותפריט צהריים", verdict: "yes", note: "בית הקפה נכנס למפה, והטיפ נכנס לרשימת הטיפים." },
     { title: "בנאי: מרקש", verdict: "partial", note: "נכנסה ל\"אולי\". צריך לבדוק כשרות." },
     { title: "מאיה: ניו יורק קפה", verdict: "yes", note: "נוסף הטיפ על התור בצהריים." },
-    { title: "שאר הרילס (בערך 65)", verdict: "pending", note: "ממתינים לצילומי מסך." }
+    { title: "מאיה: 10 מקומות חובה", verdict: "yes", note: "הטיפים נכנסו: הפרלמנט אחרי השקיעה, אוטובוס 16 ומבצר הדייגים, הקומה העליונה בשוק." },
+    { title: "BudaBest: רכבל ליבגו, מזל טוב, הבזיליקה", verdict: "yes", note: "הרכבל נוסף כחלופה ביום 4. במזל טוב מזמינים שולחן, ובבזיליקה קונים כרטיס משולב." },
+    { title: "בר: שדה התעופה ו-100E", verdict: "yes", note: "נכנס להמלצת ההסעה ולטיפים." },
+    { title: "HalfPrice", verdict: "yes", note: "נוסף לשכבת הקניות." },
+    { title: "\"מידע לדרך\" (הסרטון מהרכב)", verdict: "partial", note: "רואים רק את הכיתובים \"סיסי\" ו-\"ואץ\" בלי הקשר. מה הוא המליץ?" },
+    { title: "שאר הרילס (בערך 50)", verdict: "pending", note: "ממתינים לצילומי מסך." }
   ],
 
   emergency: [
@@ -244,6 +257,7 @@ window.TRIP = {
     { t: "מוניות", d: "רק Bolt או מונית רשמית (צהובה, עם שלט ומונה). לא עולים למונית שמציעה את עצמה ברחוב." },
     { t: "מלכודות תיירים", d: "מסעדות על רחוב ואצי ומול האתרים הגדולים יקרות ולרוב בינוניות. אוכלים רחוב או שניים משם." },
     { t: "תפריט צהריים", d: "בימי חול, בערך מ-11:30 עד 15:00, הרבה מסעדות מגישות תפריט צהריים (napi menü / lunch menu) של 2–3 מנות במחיר נמוך בהרבה. (הטיפ של יאנוש)" },
+    { t: "בשדה בחזרה", d: "ביקורת הדרכונים נמצאת רק בדרך לשער, אחרי הדיוטי פרי. כדאי להגיע לשער לפחות חצי שעה לפני שהוא נפתח. נוזלים מעל 100 מ\"ל, כמו יין שקניתם, אורזים במזוודה. (בר)" },
     { t: "כייסים", d: "בחשמלית 2, במטרו ובאזורים הצפופים: טלפון וארנק בכיס קדמי." },
     { t: "שקיעה מוקדמת", d: "בנובמבר השמש שוקעת בסביבות 16:20. התצפיות הכי יפות בין 15:30 ל-17:00, ובערב העיר מוארת." }
   ]
