@@ -200,7 +200,7 @@ function pickTips(d) {
   const out = [t[0], t[1]];
   if (ids.includes("szechenyi") || ids.includes("rudas")) out.push(t[5]);
   if (d.date === T.end) out.push(t[4]);
-  out.push(t[6]); if (day === 0) out.push(t[3], t[2]);
+  out.push(t[t.length-1]); if (day === 0) out.push(t[3], t[2], t[7], t[8]); if (day === 1) out.push(t[9]); if (day === 2) out.push(t[6]);
   return out;
 }
 document.addEventListener("click", e => { const b = e.target.closest("[data-place]"); if (b && !b.disabled) openPlace(P[b.dataset.place]); });
@@ -352,6 +352,8 @@ function renderDocs() {
     </div>
     <h3 class="sec-title">מה צריך להזמין</h3>
     <div class="book-list">${T.bookings.map(b => `<div class="book ${bookDone[b.id] ? "done" : ""}"><div class="bt"><span>${esc(b.title)}</span><span class="pill ${b.urgency === "high" && !bookDone[b.id] ? "book" : ""}">${esc(b.when)}</span></div><p>${esc(b.note)}</p><label><input type="checkbox" data-book="${b.id}" ${bookDone[b.id] ? "checked" : ""}> הוזמן</label></div>`).join("")}</div>
+    <h3 class="sec-title">המלצות מהקבוצה</h3>
+    <div class="book-list">${(T.inbox||[]).map(x => `<div class="book"><div class="bt"><span>${esc(x.title)}</span><span class="pill ${({yes:"ok",no:"book",pending:"warn",partial:"warn"})[x.verdict]||""}">${({yes:"נכנס",no:"לא מתאים",replaced:"הוחלף",partial:"חלקי",pending:"ממתין"})[x.verdict]}</span></div><p>${esc(x.note)}</p></div>`).join("")}</div>
     <h3 class="sec-title">חירום</h3>
     <div class="docs">${T.emergency.map(x => `<div class="doc"><h3>${esc(x.label)}</h3><div class="row">${x.q ? `<a class="btn ghost" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.q)}" target="_blank" rel="noopener">פתח בגוגל מפס</a>` : `<span class="copyable">${esc(x.value)}</span>`}</div></div>`).join("")}</div>
     <h3 class="sec-title">רשימת קניות ומתנות</h3>
