@@ -197,7 +197,7 @@ async function renderToday() {
 function patchThumbs() { document.querySelectorAll(".ti-card[data-place]").forEach(b => { const c = info(b.dataset.place); if (c && c.photo && !b.querySelector(".thumb")) b.insertAdjacentHTML("beforeend", `<img class="thumb" src="${esc(c.photo)}" alt="" loading="lazy">`); const sb = b.querySelector(".sb"); if (c && c.rating && sb && !sb.textContent.includes("★")) sb.textContent += " · ★ " + c.rating; }); }
 function pickTips(d) {
   const ids = d.items.map(i => i.place); const t = T.tips;
-  const out = [t[0], t[1]];
+  const out = [t[0], t[1]]; const byT = n => t.find(x => x.t === n); if (day === 0) out.unshift(byT("מהשדה למלון")); if (ids.includes("lift-var")) out.unshift(byT("המעלית לארמון"));
   if (ids.includes("szechenyi") || ids.includes("rudas")) out.push(t[5]);
   if (d.date === T.end) out.push(t[4]);
   out.push(t[t.length-1]); if (day === 0) out.push(t[3], t[2], t[7], t[8]); if (day === 1) out.push(t.find(x=>x.t==="תפריט צהריים")); if (day === 2) out.push(t[6]);
