@@ -56,7 +56,7 @@ window.TRIP = {
     { id: "szechenyi", name: "Széchenyi Thermal Bath", he: "מרחצאות סצ'ני", layer: "sights", status: "must", tags: ["indoor","romantic","rest"], q: "Széchenyi Thermal Bath", lat: 47.5187, lng: 19.0817,
       why: "המרחצאות האייקוניים: בריכות חיצוניות חמות באוויר הקר של נובמבר. כדאי לקנות כרטיס עם תא הלבשה פרטי מראש, ולהגיע אחר הצהריים ביום חול." },
     { id: "rudas", name: "Rudas Thermal Bath", he: "מרחצאות רודאש", layer: "sights", status: "nice", tags: ["indoor","view"], q: "Rudas Thermal Bath", lat: 47.4890, lng: 19.0450,
-      why: "בריכה עות'מאנית מהמאה ה-16 וג'קוזי על הגג עם נוף לדנובה. חלופה או תוספת לסצ'ני, ופחות צפוף ממנו בימי חול." },
+      why: "בריכה עות'מאנית מהמאה ה-16, ובריכת גג חמה (36°) עם נוף לדנובה, לפרלמנט ולארמון. בבריכת הגג יש מקום ל-16 אנשים בלבד, לכן מגיעים כשעה לפני השקיעה. האמבט הטורקי משותף בשני, חמישי ושישי מ-11:00. בשלישי הוא לנשים בלבד, וברביעי לגברים בלבד. הגג והוולנס משותפים כל יום. כרטיס בימי חול: 12,000 פורינט. כדאי לקחת נרתיק עמיד למים לטלפון." },
     { id: "szentendre", name: "Szentendre", he: "סנטנדרה", layer: "sights", status: "must", tags: ["romantic"], q: "Szentendre Fő tér", lat: 47.6694, lng: 19.0756,
       why: "עיירת אמנים ציורית על הדנובה: סמטאות, גלריות, בתי קפה ומרציפן. 40 דקות ברכבת HÉV H5 מבטיאני טר." },
     { id: "visegrad", name: "Visegrád Citadel", he: "מצודת ויסגרד", layer: "sights", status: "must", tags: ["view"], q: "Visegrád Upper Castle", lat: 47.7930, lng: 18.9810,
@@ -242,7 +242,7 @@ window.TRIP = {
         { time: "11:40", text: "שטרודל חם ברטשוואר, צמוד למבצר", place: "retesvar" },
         { time: "13:00", text: "צהריים על הגג של ליאו, מול גשר השלשלאות", place: "leo" },
         { time: "14:30", text: "תצפית מגבעת גלרט (שלומי ברגל, אדווה במונית אם רוצה)", place: "liberty", alt: ["libego"] },
-        { time: "16:30", text: "רודאש: ג'קוזי על הגג בשקיעה (אופציונלי)", place: "rudas" },
+        { time: "15:30", text: "יורדים מגבעת גלרט ישר לרודאש, שנמצא למרגלותיה. מגיעים כשעה לפני השקיעה (כ-16:20) כדי לתפוס מקום בבריכת הגג. שימו לב: ביום רביעי האמבט הטורקי לגברים בלבד, אז יחד נהנים מהגג, מבריכות הוולנס ומהסאונות. 12,000 פורינט", place: "rudas" },
         { time: "18:00", text: "רובע יהודי: בית הכנסת מבחוץ, יד שנייה, יין", place: "dohany", alt: ["reclaim","szputnyik","doblo","london-coffee","rumpus","pampushka"] },
         { time: "20:00", text: "הארוחה המיוחדת", place: "ramsay", alt: ["borkonyha","comme-chez-soi"], anchor: true, book: "special-dinner" }
       ]},
