@@ -10,6 +10,7 @@ window.TRIP = {
   center: { lat: 47.4995, lng: 19.0530 },
   weather: { lat: 47.4979, lng: 19.0402 },
   hotelId: "hotel",
+  applied: [],   // מזהי הצעות שכבר שולבו בתוכנית (נמחקות אוטומטית מהמכשיר)
 
   layers: {
     sights: { name: "אטרקציות, תצפיות וספא", color: "#2F6FDE", icon: "★" },

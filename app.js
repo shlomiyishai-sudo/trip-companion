@@ -20,6 +20,34 @@ const statusOf = p => statusOv[p.id] || p.status || "nice";
 const STATUS = { must: "חובה", booked: "הוזמן", nice: "נחמד", maybe: "אולי", visited: "ביקרנו", skip: "ויתרנו" };
 const layerOf = p => p.layer === "hotel" ? "hotel" : (statusOf(p) === "maybe" ? "maybe" : (p.layer === "maybe" ? "food" : p.layer));
 const colorOf = p => p.layer === "hotel" ? "#111" : (T.layers[p.layer === "maybe" ? "maybe" : p.layer] || T.layers.maybe).color;
+// ---------- שינויים שלי: הסרות והצעות ----------
+let removed = store.get("removed", {});   // "date|text" -> {date,time,text}
+const itemKey = (d, it) => d.date + "|" + it.text;
+// ניקוי הסרות שכבר טופלו בעדכון (הפריט כבר לא קיים בתוכנית)
+(() => { const live = new Set(); T.days.forEach(d => d.items.forEach(it => live.add(itemKey(d, it)))); let ch = false;
+  Object.keys(removed).forEach(k => { if (!live.has(k)) { delete removed[k]; ch = true; } }); if (ch) store.set("removed", removed); })();
+let ideas = store.get("ideas", []).filter(x => !(T.applied || []).includes(x.id));
+store.set("ideas", ideas);
+const BASE_ITEMS = T.days.map(d => d.items.slice());
+const BASE_COUNT = T.places.length;
+function applyIdeas() {
+  T.places.length = BASE_COUNT;
+  Object.keys(P).forEach(k => { if (k.startsWith("idea-")) delete P[k]; });
+  ideas.forEach(x => { if (!x.place) return;
+    const p = { id: "idea-" + x.id, name: x.place.name, he: x.place.name, layer: x.layer || "food", status: "maybe", mine: true, tags: [],
+      q: x.place.name, lat: x.place.lat, lng: x.place.lng, why: (x.note ? x.note + " · " : "") + "ההצעה שלי. היא תיבדק ותשולב בעדכון הבא." };
+    T.places.push(p); P[p.id] = p;
+    if (x.place.gid && !infoCache[p.id]) infoCache[p.id] = { t: 0, gid: x.place.gid, lat: x.place.lat, lng: x.place.lng };
+  });
+  T.days.forEach((d, i) => { d.items = BASE_ITEMS[i].concat(ideas.filter(x => x.day === i && x.place).map(x => ({ time: "➕", text: "ההצעה שלי: " + x.place.name, place: "idea-" + x.id, mine: true }))); });
+}
+// תמונות נשמרות ב-IndexedDB
+const idb = (() => { let dbp; const open = () => dbp ||= new Promise((res, rej) => { const r = indexedDB.open("tc-ideas", 1); r.onupgradeneeded = () => r.result.createObjectStore("img"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+  const tx = async (mode, fn) => { const db = await open(); return new Promise((res, rej) => { const t = db.transaction("img", mode); const st = t.objectStore("img"); const r = fn(st); t.oncomplete = () => res(r && r.result); t.onerror = () => rej(t.error); }); };
+  return { put: (k, v) => tx("readwrite", st => st.put(v, k)).catch(() => {}), get: k => tx("readonly", st => st.get(k)).catch(() => null), del: k => tx("readwrite", st => st.delete(k)).catch(() => {}) }; })();
+function shrink(file) { return new Promise(res => { const fr = new FileReader(); fr.onload = () => { const im = new Image(); im.onload = () => { const m = 1100, k = Math.min(1, m / Math.max(im.width, im.height));
+  const c = document.createElement("canvas"); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); res(c.toDataURL("image/jpeg", .72)); }; im.onerror = () => res(null); im.src = fr.result; }; fr.readAsDataURL(file); }); }
+const dataToFile = (d, name) => { const [h, b] = d.split(","); const bin = atob(b); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new File([u], name, { type: h.match(/:(.*?);/)[1] }); };
 const TAGS = { romantic: "רומנטי", indoor: "מקורה", view: "תצפית", quick: "קצר", sweet: "מתוק", drink: "לשתות", rest: "מנוחה" };
 
 // ---------- עזרים ----------
@@ -145,6 +173,7 @@ $("#dayChips").addEventListener("click", e => { const b = e.target.closest("butt
 
 // ---------- תצוגת היום ----------
 async function renderToday() {
+  const tok = renderToday.tok = (renderToday.tok || 0) + 1;
   const d = T.days[day], w = wxFor(d.date), el = $("#view-today");
   const anchors = d.items.filter(i => i.anchor);
   const pending = d.items.filter(i => i.book && !bookDone[i.book]).map(i => T.bookings.find(b => b.id === i.book)).filter(Boolean);
@@ -169,16 +198,19 @@ async function renderToday() {
   const rows = [];
   for (const it of d.items) {
     const p = it.place && P[it.place];
+    const isRem = !!removed[itemKey(d, it)];
     let legHtml = "";
-    if (p && prev && prev.id !== p.id) {
+    if (p && prev && prev.id !== p.id && !isRem) {
       const l = await leg(prev, p);
       if (l.mode === "WALK") { tot.walkM += l.m; tot.walkS += l.sec; } else tot.transS += l.sec;
       longest = Math.max(longest, l.sec);
       legHtml = `<li class="ti-item"><div></div><div class="leg ${l.sec > 1800 ? "long" : ""}">${l.mode === "WALK" ? "🚶" : "🚇"} ${fmtMin(l.sec)}${l.mode === "WALK" ? " · " + fmtDist(l.m) : " בתחבורה"}${l.est ? " (הערכה)" : ""}${l.sec > 1800 && l.mode === "WALK" ? " · מעל 30 דק', שווה מטרו או Bolt" : ""}</div></li>`;
     }
-    if (p) prev = p;
+    if (p && !isRem) prev = p;
     const c = p && info(p.id);
-    rows.push(legHtml + `<li class="ti-item"><div class="ti-time">${esc(it.time)}</div>
+    const rk = esc(itemKey(d, it));
+    rows.push(legHtml + `<li class="ti-item ${isRem ? "removed" : ""} ${it.mine ? "mine" : ""}"><div class="ti-time">${esc(it.time)}</div>
+      <div class="ti-row">
       <button class="ti-card ${it.anchor ? "anchor" : ""}" ${p ? `data-place="${p.id}"` : "disabled"}>
         ${p ? `<span class="dot" style="background:${colorOf(p)}"></span>` : `<span class="dot" style="background:var(--line)"></span>`}
         <span class="tx"><span class="nm">${esc(it.text)}</span>
@@ -186,9 +218,18 @@ async function renderToday() {
           <span class="tags">${it.anchor ? `<span class="pill anchor">עוגן</span>` : ""}${it.book ? (bookDone[it.book] ? `<span class="pill ok">הוזמן</span>` : `<span class="pill book">להזמין</span>`) : ""}${(it.alt||[]).length ? `<span class="pill">+ ${it.alt.length} חלופות</span>` : ""}${p && statusOf(p)==="visited" ? `<span class="pill ok">ביקרנו</span>` : ""}</span>
         </span>
         ${c && c.photo ? `<img class="thumb" src="${esc(c.photo)}" alt="" loading="lazy">` : ""}
-      </button></li>`);
+      </button>
+      ${it.mine ? `<button class="rm" data-idea="${esc(it.place.slice(5))}" aria-label="מחיקת ההצעה" title="מחיקת ההצעה">✕</button>`
+        : `<button class="rm" data-rm="${rk}" data-time="${esc(it.time)}" aria-label="${isRem ? "ביטול ההסרה" : "להסיר מהתוכנית"}" title="${isRem ? "ביטול ההסרה" : "להסיר מהתוכנית"}">${isRem ? "↺" : "✕"}</button>`}
+      </div>${isRem ? `<div class="rm-note">יוסר בעדכון הבא · ↺ לביטול</div>` : ""}</li>`);
   }
-  tl.innerHTML = rows.join("");
+  if (tok !== renderToday.tok) return;
+  tl.innerHTML = rows.join("") + `<li class="ti-item"><div></div><button class="add-day" id="addToDay">➕ להוסיף משהו ליום הזה</button></li>`;
+  $("#addToDay").onclick = () => openAdd(day);
+  tl.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { const k = b.dataset.rm;
+    if (removed[k]) delete removed[k]; else removed[k] = { date: d.date, time: b.dataset.time, text: k.split("|").slice(1).join("|") };
+    store.set("removed", removed); toast(removed[k] ? "סומן להסרה. ייכנס לעדכון הבא" : "ההסרה בוטלה"); renderToday(); });
+  tl.querySelectorAll("[data-idea]").forEach(b => b.onclick = () => deleteIdea(b.dataset.idea));
   const busy = tot.walkM > 12000;
   $("#dayStats").innerHTML = `🚶 <b>${fmtDist(tot.walkM)}</b> הליכה (${fmtMin(tot.walkS)})${tot.transS ? ` · 🚇 <b>${fmtMin(tot.transS)}</b> בתחבורה` : ""}${busy ? ` <span class="pill warn">יום ארוך ברגליים</span>` : ""} <button class="btn ghost" id="dayMap">על המפה</button>`;
   $("#dayMap").onclick = () => { mapLayer = "day"; go("map"); };
@@ -346,8 +387,19 @@ function card(p, dist, from) {
 function renderDocs() {
   const el = $("#view-docs");
   const shopping = store.get("shopping", "");
+  const remList = Object.entries(removed), skipped = T.places.filter(p => !p.mine && statusOv[p.id] === "skip");
+  const nChanges = remList.length + skipped.length + ideas.length;
   el.innerHTML = `
-    <h3 class="sec-title" style="margin-top:4px">טיסות ומלון</h3>
+    <h3 class="sec-title" style="margin-top:4px">📝 השינויים שלי לעדכון הבא${nChanges ? ` <span class="pill book">${nChanges}</span>` : ""}</h3>
+    <div class="doc changes">
+      ${nChanges ? "" : `<div>עוד אין שינויים. בתוכנית היומית לוחצים ✕ ליד מה שלא רוצים, ובכפתור "➕ הוספת המלצה" מוסיפים מקום חדש.</div>`}
+      ${remList.map(([k, r]) => `<div class="chg"><span>✕ ${esc(r.time)} ${esc(r.text)}</span><button class="btn ghost sm" data-unrm="${esc(k)}">ביטול</button></div>`).join("")}
+      ${skipped.map(p => `<div class="chg"><span>✕ ויתרנו: ${esc(p.he)}</span><button class="btn ghost sm" data-unskip="${p.id}">ביטול</button></div>`).join("")}
+      ${ideas.map(x => `<div class="chg"><span>➕ ${esc(x.place ? x.place.name : (x.text || "צילום מסך"))}${x.day != null ? ` · יום ${x.day + 1}` : ""}${x.note ? ` · ${esc(x.note)}` : ""}${x.imgs ? ` · 📷 ${x.imgs}` : ""}</span><button class="btn ghost sm" data-delidea="${x.id}">מחיקה</button></div>`).join("")}
+      <div class="row" style="margin-top:10px"><button class="btn acc" id="sendChg" ${nChanges ? "" : "disabled"}>📤 שליחה ל-Claude</button><button class="btn ghost" id="addIdea">➕ הוספת המלצה</button></div>
+      <div class="muted small" style="margin-top:6px">ב"שליחה" נפתח חלון שיתוף. בוחרים בו את Claude (או מעתיקים), וכל השינויים עוברים יחד עם צילומי המסך.</div>
+    </div>
+    <h3 class="sec-title">טיסות ומלון</h3>
     <div class="docs">${T.docs.map(d => `<div class="doc"><h3>${d.kind === "flight" ? "✈️" : "🏨"} ${esc(d.title)}</h3>${d.lines.map(l => `<div>${esc(l)}</div>`).join("")}${d.place ? `<div class="row" style="margin-top:8px"><a class="btn ghost" href="${gmapsDir(P[d.place])}" target="_blank" rel="noopener">ניווט למלון</a></div>` : ""}</div>`).join("")}
       <div class="doc"><h3>🔒 מסמכים אישיים</h3><div>צילומי דרכונים, אישורי הזמנה ומספרי הזמנה יישמרו באזור פרטי שנוסיף בגרסה הבאה, מוגן בסיסמה ומסונכרן ביניכם.</div></div>
     </div>
@@ -365,6 +417,10 @@ function renderDocs() {
     <div class="doc"><div>מוריד קובץ עם כל המקומות לפי שכבות. מייבאים אותו פעם אחת ל-Google My Maps, ואז כל השכבות מופיעות גם באפליקציית גוגל מפס, תחת "שמורים" ← "מפות".</div>
       <div class="row" style="margin-top:8px"><button class="btn" id="kmlAll">ייצוא כל המקומות</button><button class="btn ghost" id="kmlVisited">ייצוא "ביקרנו"</button><a class="btn ghost" href="https://www.google.com/maps/d/" target="_blank" rel="noopener">פתח את My Maps</a></div></div>
     <p class="muted small" style="margin:18px 0">גרסה 1 · נתונים מגוגל מתעדכנים אוטומטית · הסימונים נשמרים במכשיר הזה</p>`;
+  el.querySelectorAll("[data-unrm]").forEach(b => b.onclick = () => { delete removed[b.dataset.unrm]; store.set("removed", removed); renderDocs(); });
+  el.querySelectorAll("[data-unskip]").forEach(b => b.onclick = () => { delete statusOv[b.dataset.unskip]; store.set("status", statusOv); renderDocs(); });
+  el.querySelectorAll("[data-delidea]").forEach(b => b.onclick = () => deleteIdea(b.dataset.delidea));
+  $("#sendChg").onclick = sendChanges; $("#addIdea").onclick = () => openAdd(null);
   el.querySelectorAll("[data-book]").forEach(i => i.onchange = () => { bookDone[i.dataset.book] = i.checked; store.set("booked", bookDone); renderDocs(); });
   $("#shopping").oninput = e => store.set("shopping", e.target.value);
   $("#kmlAll").onclick = () => kml(T.places.filter(p => statusOf(p) !== "skip"), "budapest-all");
@@ -385,9 +441,11 @@ const QUICK = [
   ["hungry", "🍽 רעבים"], ["drink", "🍷 משהו לשתות"], ["romantic", "❤️ משהו רומנטי"], ["rain", "☔ יורד גשם"],
   ["tired", "😮‍💨 עייפים"], ["hour", "⏳ שעה פנויה"], ["home", "🏨 הכי מהר למלון"]
 ];
+QUICK.unshift(["add", "➕ הוספת המלצה"]);
 $("#quick").innerHTML = QUICK.map(([k, n]) => `<button data-q="${k}">${n}</button>`).join("");
 $("#quick").addEventListener("click", e => { const b = e.target.closest("[data-q]"); if (b) quick(b.dataset.q); });
 async function quick(k) {
+  if (k === "add") return openAdd(null);
   openSheet(`<h2>${QUICK.find(q => q[0] === k)[1]}</h2><p class="muted">מאתר אתכם…</p>`);
   const here = await getMe(); const origin = here || loc(HOTEL);
   const note = here ? "" : `<p class="muted small">לא קיבלתי מיקום, אז המרחקים מחושבים מהמלון. אפשר לאשר מיקום בהגדרות הדפדפן.</p>`;
@@ -432,6 +490,95 @@ async function quickHome(origin, note) {
     <div class="doc" style="margin-top:12px"><h3>להראות לנהג</h3><span class="copyable">Dessewffy utca 14, 1066 Budapest</span></div>`);
 }
 
+// ---------- הוספת המלצה ----------
+const LAYER_OF_TYPE = t => /restaurant|cafe|coffee|bar|bakery|food|meal|ice_cream|dessert|pub|wine/.test(t || "") ? "food" : /store|shop|mall|market|clothing|shoe/.test(t || "") ? "shop" : "sights";
+function openAdd(dayIdx) {
+  let picked = null, imgs = [];
+  openSheet(`<h2>➕ הוספת המלצה</h2>
+    <p class="muted small">מדביקים קישור או כותבים שם של מקום, ואפשר לצרף צילום מסך. אם בוחרים מקום מגוגל, הוא מופיע מיד במפה (בשכבת "אולי"), ואם בוחרים יום, גם בתוכנית של אותו יום. Claude יבדוק אותו וישלב אותו בעדכון הבא.</p>
+    <div class="form">
+      <label for="addQ">שם המקום או קישור</label>
+      <div class="row nowrap"><input id="addQ" type="text" placeholder="למשל: Gelato Rosa, או קישור מגוגל מפס / טיקטוק / פייסבוק" autocomplete="off"><button class="btn" id="addFind" type="button">חיפוש</button></div>
+      <div id="addRes" class="list"></div>
+      <label for="addNote">מה שמעניין בזה (לא חובה)</label>
+      <textarea id="addNote" rows="2" placeholder="למשל: ראינו ברילס, מומלץ לשקיעה"></textarea>
+      <label for="addImg">צילומי מסך (לא חובה)</label>
+      <input id="addImg" type="file" accept="image/*" multiple>
+      <div id="addThumbs" class="thumbs"></div>
+      <div class="row">
+        <label for="addDay" class="inl">לשבץ ביום</label>
+        <select id="addDay"><option value="">בלי שיבוץ, רק להוסיף</option>${T.days.map((d, i) => `<option value="${i}" ${i === dayIdx ? "selected" : ""}>יום ${i + 1} · ${dayLabel(d)}</option>`).join("")}</select>
+      </div>
+      <div class="row">
+        <label for="addLayer" class="inl">שכבה</label>
+        <select id="addLayer">${["sights","food","shop"].map(k => `<option value="${k}">${esc(T.layers[k].name)}</option>`).join("")}</select>
+      </div>
+      <button class="btn acc" id="addSave" type="button">שמירה</button>
+    </div>`);
+  const q = $("#addQ"), res = $("#addRes");
+  const find = async () => {
+    let text = q.value.trim(); if (!text) return toast("כתוב שם מקום או הדבק קישור");
+    const isUrl = /^https?:\/\//i.test(text);
+    if (isUrl) { const m = text.match(/\/maps\/place\/([^/@?]+)/); if (m) text = decodeURIComponent(m[1].replace(/\+/g, " "));
+      else { res.innerHTML = `<p class="muted small">את הקישור הזה אי אפשר לפתוח מכאן (טיקטוק, פייסבוק או קישור מקוצר). אפשר לשמור אותו כמו שהוא, עם צילום מסך, ו-Claude יזהה את המקום. אם אתה יודע את שם המקום, כתוב אותו כאן במקום הקישור כדי שיופיע במפה.</p>`; return; } }
+    res.innerHTML = `<p class="muted">מחפש בגוגל…</p>`;
+    try { const g = await loadGoogle(); const { Place } = g.maps.places;
+      const r = await Place.searchByText({ textQuery: text, fields: ["id","displayName","location","formattedAddress","rating","primaryType","primaryTypeDisplayName"], maxResultCount: 5, locationBias: { center: T.center, radius: 20000 }, language: "he" });
+      const list = r.places || [];
+      res.innerHTML = list.map((x, i) => `<button class="ti-card pick" data-i="${i}" type="button"><span class="tx"><span class="nm">${esc(x.displayName)}</span><span class="sb">${esc(x.primaryTypeDisplayName || "")}${x.rating ? " · ★ " + x.rating : ""} · ${esc(x.formattedAddress || "")}</span></span></button>`).join("") || `<p class="muted">לא נמצא. אפשר לשמור בכל זאת, עם קישור או צילום.</p>`;
+      res.querySelectorAll(".pick").forEach(b => b.onclick = () => { const x = list[+b.dataset.i];
+        picked = { name: x.displayName, gid: x.id, lat: x.location.lat(), lng: x.location.lng(), addr: x.formattedAddress || "" };
+        res.querySelectorAll(".pick").forEach(o => o.classList.toggle("anchor", o === b));
+        $("#addLayer").value = LAYER_OF_TYPE(x.primaryType); });
+    } catch (e) { res.innerHTML = `<p class="muted">החיפוש בגוגל לא זמין כרגע. אפשר לשמור בכל זאת.</p>`; }
+  };
+  $("#addFind").onclick = find; q.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); find(); } });
+  $("#addImg").onchange = async e => { for (const f of e.target.files) { const d = await shrink(f); if (d) imgs.push(d); }
+    $("#addThumbs").innerHTML = imgs.map(d => `<img src="${d}" alt="">`).join(""); };
+  $("#addSave").onclick = async () => {
+    const raw = q.value.trim(), note = $("#addNote").value.trim();
+    if (!raw && !imgs.length && !note) return toast("אין מה לשמור עדיין");
+    const id = Date.now().toString(36);
+    const dv = $("#addDay").value;
+    const x = { id, text: raw, note, day: dv === "" ? null : +dv, layer: $("#addLayer").value, place: picked, imgs: imgs.length, at: new Date().toISOString() };
+    for (let i = 0; i < imgs.length; i++) await idb.put(id + ":" + i, imgs[i]);
+    ideas.push(x); store.set("ideas", ideas); applyIdeas(); closeSheet();
+    toast(picked ? "נוסף למפה" + (x.day != null ? " ולתוכנית של יום " + (x.day + 1) : "") + ". ייבדק בעדכון הבא" : "נשמר. ייבדק בעדכון הבא");
+    render();
+  };
+  setTimeout(() => q.focus(), 50);
+}
+async function deleteIdea(id) {
+  const x = ideas.find(i => i.id === id); if (!x) return;
+  for (let i = 0; i < (x.imgs || 0); i++) idb.del(id + ":" + i);
+  ideas = ideas.filter(i => i.id !== id); store.set("ideas", ideas); applyIdeas(); toast("ההצעה נמחקה"); render();
+}
+function changesText() {
+  const L = [`עדכון לאפליקציית ${T.title} (${new Date().toLocaleDateString("he-IL")})`];
+  const rem = Object.values(removed);
+  if (rem.length) { L.push("", "להסיר מהתוכנית:"); rem.forEach(r => { const di = T.days.findIndex(d => d.date === r.date); L.push(`- יום ${di + 1} ${r.time}: ${r.text}`); }); }
+  const skipped = T.places.filter(p => !p.mine && statusOv[p.id] === "skip");
+  if (skipped.length) { L.push("", "ויתרנו על המקומות (להוריד):"); skipped.forEach(p => L.push(`- ${p.he} (${p.name})`)); }
+  const st = T.places.filter(p => !p.mine && statusOv[p.id] && statusOv[p.id] !== "skip" && statusOv[p.id] !== p.status);
+  if (st.length) { L.push("", "שינויי סימון:"); st.forEach(p => L.push(`- ${p.he}: ${STATUS[statusOv[p.id]]}`)); }
+  if (ideas.length) { L.push("", "המלצות חדשות לשלב:"); ideas.forEach(x => {
+    L.push(`- [#${x.id}] ${x.place ? x.place.name + (x.place.addr ? " · " + x.place.addr : "") : (x.text || "(צילום מסך)")}`);
+    if (x.text && (!x.place || x.text !== x.place.name)) L.push(`  קישור/טקסט: ${x.text}`);
+    if (x.note) L.push(`  הערה: ${x.note}`);
+    if (x.day != null) L.push(`  לשבץ ביום ${x.day + 1}`);
+    if (x.imgs) L.push(`  מצורפים ${x.imgs} צילומי מסך`); }); }
+  return L.length > 1 ? L.join("\n") : "";
+}
+async function sendChanges() {
+  const txt = changesText(); if (!txt) return toast("אין שינויים לשליחה");
+  const files = []; for (const x of ideas) for (let i = 0; i < (x.imgs || 0); i++) { const d = await idb.get(x.id + ":" + i); if (d) files.push(dataToFile(d, `idea-${x.id}-${i + 1}.jpg`)); }
+  try {
+    if (navigator.share && (!files.length || (navigator.canShare && navigator.canShare({ files })))) { await navigator.share(files.length ? { text: txt, files } : { text: txt }); return; }
+  } catch (e) { if (e && e.name === "AbortError") return; }
+  try { await navigator.clipboard.writeText(txt); toast(files.length ? "הטקסט הועתק. הדבק ב-Claude וצרף את צילומי המסך" : "הועתק. הדבק בצ'אט עם Claude", 4000); }
+  catch { openSheet(`<h2>להעתקה</h2><textarea rows="12" style="width:100%">${esc(txt)}</textarea>`); }
+}
+
 // ---------- ניווט בין מסכים ----------
 async function go(v) {
   view = v;
@@ -449,7 +596,7 @@ async function render() {
 document.querySelector(".tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) go(b.dataset.view); });
 
 // ---------- התחלה ----------
-renderHeader(); renderHeaderWx(); go("today");
+applyIdeas(); renderHeader(); renderHeaderWx(); go("today");
 if (!wx || Date.now() - wx.t > 3 * 3600e3) loadWeather();
 loadGoogle().catch(() => {});
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});

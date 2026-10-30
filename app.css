@@ -138,3 +138,25 @@ main{padding-bottom:calc(var(--tabs-h) + 70px + env(safe-area-inset-bottom,0px))
 @media (prefers-reduced-motion:no-preference){.sheet{animation:up .22s ease-out}@keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:none;opacity:1}}}
 a.btn,a.ti-card{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 a.ti-card{display:flex}
+
+/* הסרות והצעות */
+.ti-row{display:flex;gap:6px;align-items:stretch;min-width:0}
+.ti-row .ti-card{flex:1}
+.rm{flex:0 0 36px;border:1px solid var(--line);background:var(--surface);border-radius:12px;color:var(--muted);font-size:15px}
+.rm:focus-visible{outline:2px solid var(--accent)}
+.ti-item.removed .ti-card{opacity:.45;text-decoration:line-through}
+.ti-item.removed .rm{color:var(--accent);font-weight:700}
+.rm-note{grid-column:2;font-size:12px;color:var(--accent);padding:2px 4px}
+.ti-item.mine .ti-card{border-style:dashed;border-color:var(--accent)}
+.add-day{border:1px dashed var(--line);background:none;border-radius:var(--r);padding:10px;color:var(--muted);font-weight:600;width:100%}
+.form{display:grid;gap:8px;margin-top:10px}
+.form label{font-size:13px;color:var(--muted);font-weight:600}
+.form label.inl{white-space:nowrap}
+.form input[type=text],.form textarea,.form select{width:100%;font:inherit;font-size:16px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);min-width:0}
+.row.nowrap{flex-wrap:nowrap}
+.thumbs{display:flex;gap:6px;flex-wrap:wrap}
+.thumbs img{width:64px;height:64px;object-fit:cover;border-radius:8px}
+.changes .chg{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
+.changes .chg span{min-width:0}
+.btn.sm{padding:5px 10px;font-size:12.5px}
+.btn:disabled{opacity:.5}
