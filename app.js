@@ -69,19 +69,39 @@ let view = "today";
 
 // ---------- טעינת גוגל מפס ----------
 let gReady = null;
+const GERR = {
+  ApiNotActivatedMapError: "השירות Maps JavaScript API לא מופעל בפרויקט. צריך להיכנס ל-Google Cloud ← APIs & Services ← Library ולהפעיל אותו (Enable).",
+  RefererNotAllowedMapError: "המפתח נעול לכתובת אחרת. ב-Credentials, תחת Website restrictions, צריך להופיע בדיוק: https://shlomiyishai-sudo.github.io/*",
+  ApiTargetBlockedMapError: "המפתח לא מורשה לשירות Maps JavaScript API. ב-Credentials, תחת API restrictions, צריך לסמן אותו.",
+  BillingNotEnabledMapError: "אין חשבון חיוב פעיל בפרויקט. צריך לחבר Billing לפרויקט trip-companion.",
+  InvalidKeyMapError: "המפתח לא תקין. כדאי להעתיק אותו שוב מ-Credentials.",
+  ExpiredKeyMapError: "המפתח פג תוקף."
+};
+let gErr = null;
 function loadGoogle() {
   if (gReady) return gReady;
   gReady = new Promise((res, rej) => {
     window.__gmInit = () => res(window.google);
+    const ce = console.error.bind(console);
+    console.error = (...a) => { try { const m = a.join(" "); const k = Object.keys(GERR).find(x => m.includes(x)); if (k || /Google Maps JavaScript API/.test(m)) { gErr = k || m.slice(0, 200); showMapError(k ? GERR[k] + " (" + k + ")" : m.slice(0, 200)); } } catch {} ce(...a); };
     const s = document.createElement("script");
     s.src = "https://maps.googleapis.com/maps/api/js?key=" + C.mapsKey + "&v=weekly&language=he&region=HU&loading=async&libraries=places,marker,geometry&callback=__gmInit";
-    s.async = true; s.onerror = () => rej(new Error("maps"));
-    window.gm_authFailure = () => { showMapError("גוגל דחתה את מפתח המפות. בדוק שהמפתח נעול לכתובת https://shlomiyishai-sudo.github.io/* ושהשירותים מופעלים."); };
+    s.async = true; s.onerror = () => { gReady = null; rej(new Error("maps")); };
+    window.gm_authFailure = () => { gErr = gErr || "auth"; showMapError(gErr !== "auth" && GERR[gErr] ? GERR[gErr] : "גוגל דחתה את מפתח המפות. לחץ על \"בדיקת חיבור לגוגל\" כדי לראות בדיוק מה הבעיה."); };
     document.head.appendChild(s);
   });
   return gReady;
 }
-function showMapError(msg) { const n = $("#mapNote"); n.textContent = msg; n.hidden = false; toast(msg, 5000); }
+function showMapError(msg) { const n = $("#mapNote"); n.innerHTML = `<b>⚠️ בעיה בחיבור לגוגל:</b> ${esc(msg)} <button class="btn ghost sm" id="diagBtn">בדיקת חיבור לגוגל</button>`; n.hidden = false; $("#diagBtn").onclick = diagnose; toast(msg, 6000); }
+async function diagnose() {
+  openSheet(`<h2>בדיקת חיבור לגוגל</h2><div id="diagOut" class="list"><p class="muted">בודק…</p></div>`);
+  const out = [], add = (n, ok, msg) => out.push(`<div class="doc"><h3>${ok ? "✅" : "❌"} ${n}</h3><div style="direction:ltr;text-align:left;word-break:break-word">${esc(msg)}</div></div>`);
+  const call = async (url, body, mask) => { try { const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", "X-Goog-Api-Key": C.mapsKey, "X-Goog-FieldMask": mask }, body: JSON.stringify(body) }); const j = await r.json(); return j.error ? [false, j.error.status + ": " + j.error.message] : [true, "OK"]; } catch (e) { return [false, String(e)]; } };
+  add("Maps JavaScript API (המפה)", !gErr && !!window.google?.maps, gErr ? (GERR[gErr] ? gErr + ": " + GERR[gErr] : gErr) : window.google?.maps ? "OK" : "לא נטען עדיין. פתח קודם את לשונית המפה");
+  add("Places API (New)", ...(await call("https://places.googleapis.com/v1/places:searchText", { textQuery: "Gerbeaud Budapest" }, "places.displayName")));
+  add("Routes API", ...(await call("https://routes.googleapis.com/directions/v2:computeRoutes", { origin: { location: { latLng: { latitude: 47.5, longitude: 19.05 } } }, destination: { location: { latLng: { latitude: 47.49, longitude: 19.06 } } }, travelMode: "WALK" }, "routes.duration")));
+  const box = $("#diagOut"); if (box) box.innerHTML = out.join("") + `<p class="muted small">צלם את המסך הזה ושלח ל-Claude.</p><p class="muted small" style="direction:ltr;text-align:left">${esc(location.href)}</p>`;
+}
 
 // ---------- מידע מגוגל על מקומות (עם מטמון) ----------
 let infoCache = store.get("info", {});
@@ -294,6 +314,7 @@ $("#layerBar").addEventListener("click", e => { const b = e.target.closest("butt
 async function ensureMap() {
   if (map) return map;
   let g; try { g = await loadGoogle(); } catch { showMapError("לא הצלחתי לטעון את גוגל מפס. בדוק חיבור לאינטרנט."); return null; }
+  if (gErr) return null;
   const { Map } = await g.maps.importLibrary("maps");
   map = new Map($("#map"), { center: T.center, zoom: 14, mapId: C.mapId, gestureHandling: "greedy", clickableIcons: true, fullscreenControl: false, streetViewControl: false, mapTypeControl: false });
   watchMe();
@@ -416,11 +437,12 @@ function renderDocs() {
     <h3 class="sec-title">גוגל מפס</h3>
     <div class="doc"><div>מוריד קובץ עם כל המקומות לפי שכבות. מייבאים אותו פעם אחת ל-Google My Maps, ואז כל השכבות מופיעות גם באפליקציית גוגל מפס, תחת "שמורים" ← "מפות".</div>
       <div class="row" style="margin-top:8px"><button class="btn" id="kmlAll">ייצוא כל המקומות</button><button class="btn ghost" id="kmlVisited">ייצוא "ביקרנו"</button><a class="btn ghost" href="https://www.google.com/maps/d/" target="_blank" rel="noopener">פתח את My Maps</a></div></div>
+    <div class="row" style="margin-top:14px"><button class="btn ghost" id="diag2">🔧 בדיקת חיבור לגוגל</button></div>
     <p class="muted small" style="margin:18px 0">גרסה 1 · נתונים מגוגל מתעדכנים אוטומטית · הסימונים נשמרים במכשיר הזה</p>`;
   el.querySelectorAll("[data-unrm]").forEach(b => b.onclick = () => { delete removed[b.dataset.unrm]; store.set("removed", removed); renderDocs(); });
   el.querySelectorAll("[data-unskip]").forEach(b => b.onclick = () => { delete statusOv[b.dataset.unskip]; store.set("status", statusOv); renderDocs(); });
   el.querySelectorAll("[data-delidea]").forEach(b => b.onclick = () => deleteIdea(b.dataset.delidea));
-  $("#sendChg").onclick = sendChanges; $("#addIdea").onclick = () => openAdd(null);
+  $("#diag2").onclick = diagnose; $("#sendChg").onclick = sendChanges; $("#addIdea").onclick = () => openAdd(null);
   el.querySelectorAll("[data-book]").forEach(i => i.onchange = () => { bookDone[i.dataset.book] = i.checked; store.set("booked", bookDone); renderDocs(); });
   $("#shopping").oninput = e => store.set("shopping", e.target.value);
   $("#kmlAll").onclick = () => kml(T.places.filter(p => statusOf(p) !== "skip"), "budapest-all");
