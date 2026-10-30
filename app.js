@@ -309,8 +309,8 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeSheet()
 // ---------- מפה ----------
 let map, markers = [], dayLines = [], me = null, meMarker = null, mapLayer = "day";
 const MAPLAYERS = () => [["day", "תוכנית היום", "#D9622B"], ...Object.entries(T.layers).map(([k, v]) => [k, v.name, v.color]), ["visited", "ביקרנו", "#2E8B57"], ["all", "הכל", "#14262E"]];
-function renderLayerBar() { $("#layerBar").innerHTML = MAPLAYERS().map(([k, n, c]) => `<button data-layer="${k}" class="${k === mapLayer ? "on" : ""}"><span class="sw" style="background:${c}"></span>${esc(n)}</button>`).join(""); }
-$("#layerBar").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; mapLayer = b.dataset.layer; renderLayerBar(); refreshMarkers(); });
+function renderLayerBar() { $("#layerBar").innerHTML = MAPLAYERS().map(([k, n, c]) => `<button data-layer="${k}" class="${k === mapLayer ? "on" : ""}"><span class="sw" style="background:${c}"></span>${esc(n)}</button>`).join("") + `<button data-diag="1">🔧 בדיקת חיבור</button>`; }
+$("#layerBar").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; if (b.dataset.diag) return diagnose(); mapLayer = b.dataset.layer; renderLayerBar(); refreshMarkers(); });
 async function ensureMap() {
   if (map) return map;
   let g; try { g = await loadGoogle(); } catch { showMapError("לא הצלחתי לטעון את גוגל מפס. בדוק חיבור לאינטרנט."); return null; }
@@ -438,7 +438,7 @@ function renderDocs() {
     <div class="doc"><div>מוריד קובץ עם כל המקומות לפי שכבות. מייבאים אותו פעם אחת ל-Google My Maps, ואז כל השכבות מופיעות גם באפליקציית גוגל מפס, תחת "שמורים" ← "מפות".</div>
       <div class="row" style="margin-top:8px"><button class="btn" id="kmlAll">ייצוא כל המקומות</button><button class="btn ghost" id="kmlVisited">ייצוא "ביקרנו"</button><a class="btn ghost" href="https://www.google.com/maps/d/" target="_blank" rel="noopener">פתח את My Maps</a></div></div>
     <div class="row" style="margin-top:14px"><button class="btn ghost" id="diag2">🔧 בדיקת חיבור לגוגל</button></div>
-    <p class="muted small" style="margin:18px 0">גרסה 1 · נתונים מגוגל מתעדכנים אוטומטית · הסימונים נשמרים במכשיר הזה</p>`;
+    <p class="muted small" style="margin:18px 0">גרסה 17 · נתונים מגוגל מתעדכנים אוטומטית · הסימונים נשמרים במכשיר הזה</p>`;
   el.querySelectorAll("[data-unrm]").forEach(b => b.onclick = () => { delete removed[b.dataset.unrm]; store.set("removed", removed); renderDocs(); });
   el.querySelectorAll("[data-unskip]").forEach(b => b.onclick = () => { delete statusOv[b.dataset.unskip]; store.set("status", statusOv); renderDocs(); });
   el.querySelectorAll("[data-delidea]").forEach(b => b.onclick = () => deleteIdea(b.dataset.delidea));
