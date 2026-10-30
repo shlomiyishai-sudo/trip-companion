@@ -15,6 +15,7 @@ const store = {
 };
 let statusOv = store.get("status", {});   // id -> status
 let bookDone = store.get("booked", {});   // bookingId -> true
+(T.bookings || []).forEach(b => { if (b.done && bookDone[b.id] === undefined) bookDone[b.id] = true; });
 const statusOf = p => statusOv[p.id] || p.status || "nice";
 const STATUS = { must: "חובה", booked: "הוזמן", nice: "נחמד", maybe: "אולי", visited: "ביקרנו", skip: "ויתרנו" };
 const layerOf = p => p.layer === "hotel" ? "hotel" : (statusOf(p) === "maybe" ? "maybe" : (p.layer === "maybe" ? "food" : p.layer));
@@ -126,7 +127,7 @@ function renderHeaderWx() { const el = $("#wxNow"); if (!wx || !wx.j.current) { 
 function wxAdvice(w, d) {
   if (!w) return "התחזית לתאריך הזה תופיע כ-16 יום לפני.";
   const a = [];
-  if (w.rain >= 60) a.push(d.date === "2026-11-10" ? "צפוי גשם ביום הטיול מחוץ לעיר. כדאי לשקול להחליף עם יום 4 (11.11)." : "צפוי גשם. ללבוש מעיל עמיד ולשלב עצירות במקומות מקורים (\"יורד גשם\" למטה).");
+  if (w.rain >= 60) a.push(d.date === "2026-11-09" ? "צפוי גשם ביום הטיול מחוץ לעיר. כדאי לשקול להחליף עם יום 4 (11.11)." : "צפוי גשם. ללבוש מעיל עמיד ולשלב עצירות במקומות מקורים (\"יורד גשם\" למטה).");
   else if (w.rain >= 30) a.push("יש סיכוי לטפטוף. כדאי מטרייה קטנה בתיק.");
   if (w.wind >= 35) a.push("רוח חזקה. בתצפיות הגבוהות (מבצר הדייגים, גבעת גלרט) יהיה קר, אז לקצר שם.");
   if (w.max <= 6) a.push("קר במיוחד: כובע, כפפות ושכבות.");
