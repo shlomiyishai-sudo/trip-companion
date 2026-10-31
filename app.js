@@ -270,7 +270,7 @@ async function renderToday() {
         </span>
         ${c && c.photo ? `<img class="thumb" src="${esc(c.photo)}" alt="" loading="lazy">` : ""}
       </button>
-      ${p && sayOf(p) ? `<button class="rm nb" data-sayp="${p.id}" aria-label="מה לומר למלצר" title="מה לומר למלצר">🗣</button>` : ""}
+      ${p && sayOf(p) ? `<button class="rm nb" data-sayp="${p.id}" aria-label="מה לומר" title="מה לומר">🗣</button>` : ""}
       <button class="rm nb" data-note="${rk}" aria-label="הערה" title="הערה">📝</button>
       ${it.mine ? `<button class="rm" data-idea="${esc(it.place.slice(5))}" aria-label="מחיקת ההצעה" title="מחיקת ההצעה">✕</button>`
         : `<button class="rm" data-rm="${rk}" data-time="${esc(it.time)}" aria-label="${isRem ? "ביטול ההסרה" : "להסיר מהתוכנית"}" title="${isRem ? "ביטול ההסרה" : "להסיר מהתוכנית"}">${isRem ? "↺" : "✕"}</button>`}
@@ -310,7 +310,7 @@ async function openPlace(p) {
       <h2>${esc(p.he)}</h2><div class="en">${esc(p.name)}${c && c.addr ? " · " + esc(c.addr) : ""}</div>
       ${c && c.photo ? `<img class="photo" src="${esc(c.photo)}" alt="${esc(p.he)}">` : ""}
       <div class="why"><b>למה זה מתאים לנו:</b> ${esc(p.why)}</div>
-      ${sayOf(p) ? `<button class="btn acc sm" id="plSay" style="margin-inline-end:6px">🗣 מה לומר למלצר</button>` : ""}${noteHtml("pl:" + p.id)}<button class="btn ghost sm" id="plNote">📝 ${notes["pl:" + p.id] ? "עריכת ההערה שלי" : "הוספת הערה"}</button>
+      ${sayOf(p) ? `<button class="btn acc sm" id="plSay" style="margin-inline-end:6px">🗣 ${p.layer === "hotel" ? "מה לומר בקבלה" : "מה לומר למלצר"}</button>` : ""}${noteHtml("pl:" + p.id)}<button class="btn ghost sm" id="plNote">📝 ${notes["pl:" + p.id] ? "עריכת ההערה שלי" : "הוספת הערה"}</button>
       <div class="facts">
         ${c && c.rating ? `<div><span class="k">ציון בגוגל:</span> ★ ${c.rating} (${(c.count||0).toLocaleString("he-IL")} ביקורות)${c.price ? " · " + c.price : ""}</div>` : ""}
         ${open != null ? `<div><span class="k">עכשיו:</span> ${open ? "<b style='color:var(--ok)'>פתוח</b>" : "<b style='color:var(--bad)'>סגור</b>"}</div>` : ""}
