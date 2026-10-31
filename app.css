@@ -206,3 +206,8 @@ body.board-open{overflow:hidden}
 .gmrow .tx small{display:block;color:var(--muted);font-size:12px}
 .gmrow.ok .tx{opacity:.55}
 .gmrow label{display:flex;gap:4px;align-items:center;font-size:12.5px;white-space:nowrap}
+
+.rm.bk-todo{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--surface))}
+.rm.bk-ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,var(--surface))}
+button.pill{border:0;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.tabs button{font-size:12px}

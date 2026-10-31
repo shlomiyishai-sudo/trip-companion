@@ -47,6 +47,22 @@ function openSay(say, title) {
   $("#sayCopy").onclick = async () => { try { await navigator.clipboard.writeText(say.en); toast("הועתק"); } catch { toast("סמן את הטקסט והעתק"); } };
   $("#sayBig").onclick = () => $("#sheet").querySelectorAll(".say-en").forEach(e => e.classList.toggle("big"));
 }
+function openBooking(id) {
+  const b = T.bookings.find(x => x.id === id); if (!b) return;
+  const done = !!bookDone[b.id];
+  openSheet(`<h2>🎫 ${esc(b.title.replace("✅ ", ""))}</h2>
+    <div class="row"><span class="pill ${done ? "ok" : (b.urgency === "high" ? "book" : "")}">${done ? "✅ הוזמן" : "עוד לא הוזמן"}</span><span class="pill">${esc(b.when)}</span></div>
+    <div class="why" style="white-space:pre-wrap">${esc(b.note)}</div>
+    ${noteHtml("bk:" + b.id)}
+    <div class="row" style="margin-top:10px">
+      <label class="pill"><input type="checkbox" id="bkDone" ${done ? "checked" : ""}> הוזמן</label>
+      ${b.say ? `<button class="btn acc sm" id="bkSay">🗣 מה לומר</button>` : ""}
+      <button class="btn ghost sm" id="bkNote">📝 ${notes["bk:" + b.id] ? "עריכת הערה" : "הערה"}</button>
+    </div>`);
+  $("#bkDone").onchange = e => { bookDone[b.id] = e.target.checked; store.set("booked", bookDone); markShared(); openBooking(id); if (view === "today") renderToday(); };
+  if (b.say) $("#bkSay").onclick = () => openSay(b.say, b.title.replace("✅ ", ""));
+  $("#bkNote").onclick = () => editNote("bk:" + b.id, b.title, () => { openBooking(id); if (view === "today") renderToday(); });
+}
 function editNote(k, title, after) {
   openSheet(`<h2>📝 הערה</h2><p class="muted small">${esc(title)}</p>
     <div class="form"><textarea id="noteTxt" rows="4" placeholder="כתוב כאן הערה…">${esc(notes[k] || "")}</textarea>
@@ -238,7 +254,7 @@ async function renderToday() {
       </div>
       <div class="advice">${esc(wxAdvice(w, d))}</div>
       ${anchors.length ? `<div class="row">${anchors.map(a => `<span class="pill anchor">⏰ ${a.time} ${esc(a.text)}</span>`).join("")}</div>` : ""}
-      ${uniq.length ? `<div class="row">${uniq.map(b => `<span class="pill book">להזמין: ${esc(b.title)}</span>`).join("")}</div>` : ""}
+      ${uniq.length ? `<div class="row">${uniq.map(b => `<button class="pill book" data-bk="${b.id}">🎫 להזמין: ${esc(b.title)}</button>`).join("")}</div>` : ""}
     </div>
     <div class="daystats" id="dayStats">מחשב זמני הליכה…</div>
     <ol class="timeline" id="tl"></ol>
@@ -270,6 +286,7 @@ async function renderToday() {
         </span>
         ${c && c.photo ? `<img class="thumb" src="${esc(c.photo)}" alt="" loading="lazy">` : ""}
       </button>
+      ${it.book && T.bookings.find(b => b.id === it.book) ? `<button class="rm nb ${bookDone[it.book] ? "bk-ok" : "bk-todo"}" data-bk="${it.book}" aria-label="פרטי ההזמנה" title="פרטי ההזמנה">🎫</button>` : ""}
       ${p && sayOf(p) ? `<button class="rm nb" data-sayp="${p.id}" aria-label="מה לומר" title="מה לומר">🗣</button>` : ""}
       <button class="rm nb" data-note="${rk}" aria-label="הערה" title="הערה">📝</button>
       ${it.mine ? `<button class="rm" data-idea="${esc(it.place.slice(5))}" aria-label="מחיקת ההצעה" title="מחיקת ההצעה">✕</button>`
@@ -282,6 +299,7 @@ async function renderToday() {
   tl.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { const k = b.dataset.rm;
     if (removed[k]) delete removed[k]; else removed[k] = { date: d.date, time: b.dataset.time, text: k.split("|").slice(1).join("|") };
     store.set("removed", removed); toast(removed[k] ? "סומן להסרה. ייכנס לעדכון הבא" : "ההסרה בוטלה"); renderToday(); });
+  el.querySelectorAll("[data-bk]").forEach(b => b.onclick = () => openBooking(b.dataset.bk));
   tl.querySelectorAll("[data-sayp]").forEach(b => b.onclick = () => { const p = P[b.dataset.sayp]; openSay(sayOf(p), p.he); });
   tl.querySelectorAll("[data-note]").forEach(b => b.onclick = () => { const k = b.dataset.note; editNote("it:" + k, k.split("|").slice(1).join("|"), renderToday); });
   tl.querySelectorAll("[data-idea]").forEach(b => b.onclick = () => deleteIdea(b.dataset.idea));
@@ -465,8 +483,7 @@ function renderDocs() {
     <div class="docs">${T.docs.map(d => `<div class="doc"><h3>${d.kind === "flight" ? "✈️" : "🏨"} ${esc(d.title)}</h3>${d.lines.map(l => `<div>${esc(l)}</div>`).join("")}${d.place ? `<div class="row" style="margin-top:8px"><a class="btn ghost" href="${gmapsDir(P[d.place])}" target="_blank" rel="noopener">ניווט למלון</a></div>` : ""}</div>`).join("")}
       <div class="doc"><h3>🔒 מסמכים אישיים</h3><div>צילומי דרכונים, אישורי הזמנה ומספרי הזמנה יישמרו באזור פרטי שנוסיף בגרסה הבאה, מוגן בסיסמה ומסונכרן ביניכם.</div></div>
     </div>
-    <h3 class="sec-title">מה צריך להזמין</h3>
-    <div class="book-list">${T.bookings.map(b => `<div class="book ${bookDone[b.id] ? "done" : ""}"><div class="bt"><span>${esc(b.title)}</span><span class="pill ${b.urgency === "high" && !bookDone[b.id] ? "book" : ""}">${esc(b.when)}</span></div><p>${esc(b.note)}</p>${noteHtml("bk:" + b.id)}<div class="row">${b.say ? `<button class="btn acc sm" data-say="${b.id}">🗣 מה לומר למלצר</button>` : ""}<label><input type="checkbox" data-book="${b.id}" ${bookDone[b.id] ? "checked" : ""}> הוזמן</label><button class="btn ghost sm" data-bnote="${b.id}">📝 ${notes["bk:" + b.id] ? "עריכת הערה" : "הערה"}</button></div></div>`).join("")}</div>
+    <div class="doc"><div>🎫 כל ההזמנות, הביטולים וההערות נמצאים עכשיו ב"תכנית החופשה", בכפתור 🎫 ליד כל פריט.</div></div>
     <details class="inbox" ${store.get("inboxOpen", false) ? "open" : ""}><summary class="sec-title">המלצות מהקבוצה <span class="muted small">(${(T.inbox||[]).filter(x => !hiddenInbox[x.title]).length})</span></summary>
     <p class="muted small">✕ מסתיר המלצה שכבר טופלה. ↺ בתחתית מחזיר את כולן.</p>
     <div class="book-list">${(T.inbox||[]).filter(x => !hiddenInbox[x.title]).map(x => `<div class="book"><div class="bt"><span>${esc(x.title)}</span><span class="row nowrap"><span class="pill ${({yes:"ok",no:"book",pending:"warn",partial:"warn"})[x.verdict]||""}">${({yes:"נכנס",no:"לא מתאים",replaced:"הוחלף",partial:"חלקי",pending:"ממתין"})[x.verdict]}</span><button class="rm" data-hideinbox="${esc(x.title)}" aria-label="הסתרה">✕</button></span></div><p>${esc(x.note)}</p>${noteHtml("ib:" + x.title)}<button class="btn ghost sm" data-inote="${esc(x.title)}">📝 ${notes["ib:" + x.title] ? "עריכת הערה" : "הערה"}</button></div>`).join("")}</div>
@@ -488,15 +505,12 @@ function renderDocs() {
   el.querySelectorAll("[data-unrm]").forEach(b => b.onclick = () => { delete removed[b.dataset.unrm]; store.set("removed", removed); renderDocs(); });
   el.querySelectorAll("[data-unskip]").forEach(b => b.onclick = () => { delete statusOv[b.dataset.unskip]; store.set("status", statusOv); renderDocs(); });
   el.querySelectorAll("[data-delidea]").forEach(b => b.onclick = () => deleteIdea(b.dataset.delidea));
-  el.querySelectorAll("[data-say]").forEach(b => b.onclick = () => { const x = T.bookings.find(y => y.id === b.dataset.say); openSay(x.say, x.title.replace("✅ ", "")); });
-  el.querySelectorAll("[data-bnote]").forEach(b => b.onclick = () => { const x = T.bookings.find(y => y.id === b.dataset.bnote); editNote("bk:" + x.id, x.title, renderDocs); });
   el.querySelectorAll("[data-inote]").forEach(b => b.onclick = () => editNote("ib:" + b.dataset.inote, b.dataset.inote, renderDocs));
   el.querySelectorAll("[data-hideinbox]").forEach(b => b.onclick = () => { hiddenInbox[b.dataset.hideinbox] = 1; store.set("hiddenInbox", hiddenInbox); renderDocs(); });
   const uh = $("#unhideInbox"); if (uh) uh.onclick = () => { hiddenInbox = {}; store.set("hiddenInbox", hiddenInbox); renderDocs(); };
   const ib = el.querySelector("details.inbox"); if (ib) ib.ontoggle = () => store.set("inboxOpen", ib.open);
   $("#syncSet").onclick = openSyncSettings; $("#openBoard2").onclick = openBoard;
   $("#diag2").onclick = diagnose; $("#sendChg").onclick = sendChanges; $("#addIdea").onclick = () => openAdd(null);
-  el.querySelectorAll("[data-book]").forEach(i => i.onchange = () => { bookDone[i.dataset.book] = i.checked; store.set("booked", bookDone); markShared(); renderDocs(); });
   $("#shopping").oninput = e => store.set("shopping", e.target.value);
   $("#gmList").onclick = openGmList;
   $("#kmlAll").onclick = () => kml(T.places.filter(p => statusOf(p) !== "skip"), "budapest-all");
