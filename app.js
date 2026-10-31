@@ -37,13 +37,15 @@ const itemKey = (d, it) => d.date + "|" + it.text;
 let notes = Object.assign({}, shared.notes || {}, store.get("notes", {}));        // key -> text ("" = נמחק)
 let hiddenInbox = store.get("hiddenInbox", {});
 const noteHtml = k => notes[k] ? `<div class="mynote">📝 ${esc(notes[k])}</div>` : "";
+const sayOf = p => p.say || (p.layer === "food" || (p.layer === "maybe" && /restaurant|étterem|bistro|café|cafe|bar/i.test(p.name)) ? T.defaultSay : null);
 function openSay(say, title) {
   openSheet(`<h2>🗣 מה לומר${title ? " · " + esc(title) : ""}</h2>
     <div class="say-en" dir="ltr" lang="en">${esc(say.en)}</div>
+    ${say.hu ? `<div class="say-en" dir="ltr" lang="hu" style="margin-top:8px">🇭🇺 ${esc(say.hu)}</div>` : ""}
     <div class="muted small" style="margin:8px 0">${esc(say.he)}</div>
     <div class="row"><button class="btn acc" id="sayCopy">העתקה</button><button class="btn ghost" id="sayBig">הגדלה להצגה למלצר</button></div>`);
   $("#sayCopy").onclick = async () => { try { await navigator.clipboard.writeText(say.en); toast("הועתק"); } catch { toast("סמן את הטקסט והעתק"); } };
-  $("#sayBig").onclick = () => $("#sheet .say-en").classList.toggle("big");
+  $("#sayBig").onclick = () => $("#sheet").querySelectorAll(".say-en").forEach(e => e.classList.toggle("big"));
 }
 function editNote(k, title, after) {
   openSheet(`<h2>📝 הערה</h2><p class="muted small">${esc(title)}</p>
@@ -306,7 +308,7 @@ async function openPlace(p) {
       <h2>${esc(p.he)}</h2><div class="en">${esc(p.name)}${c && c.addr ? " · " + esc(c.addr) : ""}</div>
       ${c && c.photo ? `<img class="photo" src="${esc(c.photo)}" alt="${esc(p.he)}">` : ""}
       <div class="why"><b>למה זה מתאים לנו:</b> ${esc(p.why)}</div>
-      ${p.say ? `<button class="btn acc sm" id="plSay" style="margin-inline-end:6px">🗣 מה לומר למלצר</button>` : ""}${noteHtml("pl:" + p.id)}<button class="btn ghost sm" id="plNote">📝 ${notes["pl:" + p.id] ? "עריכת ההערה שלי" : "הוספת הערה"}</button>
+      ${sayOf(p) ? `<button class="btn acc sm" id="plSay" style="margin-inline-end:6px">🗣 מה לומר למלצר</button>` : ""}${noteHtml("pl:" + p.id)}<button class="btn ghost sm" id="plNote">📝 ${notes["pl:" + p.id] ? "עריכת ההערה שלי" : "הוספת הערה"}</button>
       <div class="facts">
         ${c && c.rating ? `<div><span class="k">ציון בגוגל:</span> ★ ${c.rating} (${(c.count||0).toLocaleString("he-IL")} ביקורות)${c.price ? " · " + c.price : ""}</div>` : ""}
         ${open != null ? `<div><span class="k">עכשיו:</span> ${open ? "<b style='color:var(--ok)'>פתוח</b>" : "<b style='color:var(--bad)'>סגור</b>"}</div>` : ""}
@@ -321,7 +323,7 @@ async function openPlace(p) {
       </div>
       ${p.layer !== "hotel" ? `<div class="status" role="group" aria-label="סימון">${Object.entries(STATUS).map(([k, v]) => `<button data-st="${k}" class="${st === k ? "on" : ""}">${v}</button>`).join("")}</div>` : ""}
     `);
-    if (p.say) $("#plSay").onclick = () => openSay(p.say, p.he);
+    if (sayOf(p)) $("#plSay").onclick = () => openSay(sayOf(p), p.he);
     $("#plNote").onclick = () => editNote("pl:" + p.id, p.he, () => openPlace(p));
     $("#showOnMap").onclick = () => { closeSheet(); mapLayer = "all"; go("map").then(() => focusPlace(p)); };
     $("#sheet").querySelectorAll("[data-st]").forEach(b => b.onclick = () => { statusOv[p.id] = b.dataset.st; store.set("status", statusOv); markShared(); draw(info(p.id), open); toast("סומן: " + STATUS[b.dataset.st]); refreshMarkers(); });
@@ -532,11 +534,13 @@ async function quick(k) {
   const nearbyType = { hungry: ["restaurant"], drink: ["bar","wine_bar","cocktail_bar"], tired: ["cafe","coffee_shop"], rain: ["cafe","shopping_mall"], romantic: ["wine_bar","fine_dining_restaurant"], hour: ["tourist_attraction"] }[k];
   const draw = (g) => openSheet(`<h2>${title}</h2>${note}
     ${k === "tired" ? `<div class="row" style="margin:8px 0"><button class="btn acc" id="goHome">🏨 הכי מהר למלון</button></div>` : ""}
+    ${k === "hungry" || k === "drink" || k === "romantic" ? `<div class="row" style="margin:8px 0"><button class="btn ghost" id="qSay">🗣 מה לומר למלצר</button></div>` : ""}
     <h3 class="sec-title" style="margin-top:8px">מהרשימה שלנו</h3><div class="list">${ours.map(([p, d]) => card(p, d, "מכם")).join("") || `<p class="muted">אין משהו מהרשימה בקרבת מקום.</p>`}</div>
     <h3 class="sec-title">עוד בסביבה, לפי גוגל</h3><div class="list" id="gNear">${g == null ? `<p class="muted">מחפש…</p>` : g}</div>
     <p class="muted small" style="margin-top:10px">במקומות של גוגל צריך לבדוק בעצמכם התאמה למגבלות האוכל.</p>`);
   draw(null);
   if (k === "tired") $("#goHome").onclick = () => quick("home");
+  const qs = $("#qSay"); if (qs) qs.onclick = () => openSay(T.defaultSay, "");
   try {
     const gg = await loadGoogle(); const { Place } = gg.maps.places;
     const r = await Place.searchNearby({ fields: ["id","displayName","location","rating","userRatingCount","googleMapsURI","primaryTypeDisplayName"], locationRestriction: { center: origin, radius: 700 }, includedPrimaryTypes: nearbyType, maxResultCount: 12, rankPreference: "POPULARITY", language: "he" });

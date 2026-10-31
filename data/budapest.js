@@ -126,7 +126,7 @@ window.TRIP = {
       why: "מאפים מושקעים ליד כיכר דאק ורחוב האופנה. מ-16:00 יש גם פיצות על בצק פוקאצ'ה. בקופה אומרים Banai10 ומקבלים 10% הנחה. (משפחת בנאי)" },
     { id: "comme-chez-soi", name: "Comme Chez Soi", he: "קום שה סואה, איטלקית", layer: "food", status: "must", tags: ["romantic","indoor"], q: "Comme Chez Soi Budapest", lat: 47.4935, lng: 19.0545,
       why: "מסעדה איטלקית קטנה ואינטימית שישראלים רבים אוהבים. מנות מצוינות. מועמדת טובה לארוחה רומנטית, ואתם אוהבים איטלקי. להזמין מראש." },
-    { id: "bombay", name: "Bombay Budapest", he: "בומביי, הודית", layer: "food", status: "nice", tags: ["indoor"], q: "Bombay Budapest restaurant", lat: 47.5040, lng: 19.0600,
+    { id: "bombay", say: {"en": "Hello! A few dietary requests, please: no pork and no seafood (fish is fine). For the meat dishes (chicken or lamb), please cook them without ghee, butter, cream or yogurt, with oil only. Vegetarian dishes with dairy are fine on their own. No fava beans for my wife. Medium spicy, please. Thank you!", "he": "שלום! כמה בקשות: בלי חזיר ובלי פירות ים (דגים זה בסדר). את מנות הבשר (עוף או טלה) בבקשה בלי גהי, חמאה, שמנת או יוגורט, רק בשמן. מנות צמחוניות עם חלב זה בסדר בנפרד. ובלי פול לאשתי. חריפות בינונית, בבקשה. תודה!"}, name: "Bombay Budapest", he: "בומביי, הודית", layer: "food", status: "nice", tags: ["indoor"], q: "Bombay Budapest restaurant", lat: 47.5040, lng: 19.0600,
       why: "מסעדה הודית מעולה עם מבחר גדול של מנות, לא חריפה מדי. טובה לערב שלא בא בו אוכל הונגרי. (קבוצת \"בודפשט טיפים למטייל\")" },
     { id: "marumba", name: "Marumba", he: "מרומבה, צמחונית", layer: "food", status: "nice", tags: ["indoor"], q: "Marumba Budapest", lat: 47.4980, lng: 19.0600,
       why: "מסעדה צמחונית ומקורית. בלי בשר בכלל, אז אין דאגה מחזיר או מערבוב. (קבוצת \"בודפשט טיפים למטייל\")" },
@@ -146,7 +146,7 @@ window.TRIP = {
       why: "המרחצאות שהמקומיים בוחרים בהם, פחות תיירותיים מסצ'ני. חלופה אם סצ'ני עמוס מדי. (budapest4t)" },
     { id: "pichler", name: "Gelateria Pichler", he: "פיכלר, הקירטוש של נדב", layer: "food", status: "must", tags: ["sweet","quick"], q: "Gelateria Pichler Fagyizó Budapest", lat: 47.4990, lng: 19.0540,
       why: "\"הקירטוש הכי טעים שאכלתי בבודפשט\" לפי נדב בורנשטיין, כנראה הטיקטוק של אדווה. יש בו טעמים כמו פיסטוק, קינמון, קוקוס ונוטלה, וגם גלידה בתוך הקירטוש." },
-    { id: "aleli", name: "Alelí Budapest", he: "אללי, איטלקית של שף מישלן", layer: "food", status: "must", tags: ["romantic","indoor"], q: "Alelí Budapest Wekerle Sándor utca Dorothea", lat: 47.4965, lng: 19.0505,
+    { id: "aleli", say: {"en": "Hello! A few dietary requests, please: no pork at all. Could you check the pasta sauces for guanciale, pancetta or prosciutto (for example carbonara or amatriciana)? No seafood (fish is fine). We don't mix meat and dairy, so meat dishes without cheese, butter or cream. Cheese pizzas and pastas without meat are perfect. No fava beans for my wife. Thank you!", "he": "שלום! כמה בקשות: בלי חזיר בכלל. אפשר לבדוק שברטבי הפסטה אין גואנצ'לה, פנצ'טה או פרושוטו (למשל בקרבונרה או באמטריצ'אנה)? בלי פירות ים (דגים זה בסדר). אנחנו לא מערבבים בשר וחלב, אז מנות בשר בלי גבינה, חמאה או שמנת. פיצות ופסטות עם גבינה בלי בשר מצוינות. ובלי פול לאשתי. תודה!"}, name: "Alelí Budapest", he: "אללי, איטלקית של שף מישלן", layer: "food", status: "must", tags: ["romantic","indoor"], q: "Alelí Budapest Wekerle Sándor utca Dorothea", lat: 47.4965, lng: 19.0505,
       why: "מסעדה איטלקית של השף דני גרסיה, בעל 3 כוכבי מישלן. יש בה טאבון ענק, פיצה נפוליטנית בכ-45 ₪, פסטות קאצ'ו א פפה וטירמיסו מטריף. איטלקי טוב במחיר נוח. נמצאת במלון דורותיאה ליד כיכר ורשמרטי, אותו מלון של גורדון רמזי, כ-10 דק' הליכה מהמלון שלכם. הזמנה באתר aleli.hu. (נדב בורנשטיין)" },
     { id: "cookie-beacon", name: "Cookie Beacon Brunch", he: "קוקי ביקון, עוגיות", layer: "food", status: "nice", tags: ["sweet","quick"], q: "Cookie Beacon Brunch Budapest", lat: 47.4975, lng: 19.0590,
       why: "עוגיות ענק עם מילוי נוטלה. השם מטעה: \"ביקון\" היא רק מילה בשם. (נדב)" },
@@ -231,7 +231,7 @@ window.TRIP = {
       note: "להזמין דרך דף הפייסבוק או בטלפון +36 1 266 9013. לבקש איגלו עם נוף לארמון." },
     { id: "highnote", title: "שולחן ב-High Note", when: "10.11 20:00", urgency: "mid",
       note: "להזמין באתר highnoteskybar.hu, ולבקש את החלק המקורה עם הנוף לבזיליקה." },
-    { id: "aleli", title: "שולחן באללי", when: "9.11 19:30", urgency: "mid",
+    { id: "aleli", say: {"en": "Hello! A few dietary requests, please: no pork at all. Could you check the pasta sauces for guanciale, pancetta or prosciutto (for example carbonara or amatriciana)? No seafood (fish is fine). We don't mix meat and dairy, so meat dishes without cheese, butter or cream. Cheese pizzas and pastas without meat are perfect. No fava beans for my wife. Thank you!", "he": "שלום! כמה בקשות: בלי חזיר בכלל. אפשר לבדוק שברטבי הפסטה אין גואנצ'לה, פנצ'טה או פרושוטו (למשל בקרבונרה או באמטריצ'אנה)? בלי פירות ים (דגים זה בסדר). אנחנו לא מערבבים בשר וחלב, אז מנות בשר בלי גבינה, חמאה או שמנת. פיצות ופסטות עם גבינה בלי בשר מצוינות. ובלי פול לאשתי. תודה!"}, title: "שולחן באללי", when: "9.11 19:30", urgency: "mid",
       note: "הזמנה באתר aleli.hu. בהערות: no pork, no seafood, no mixing meat and dairy." },
     { id: "basilica", title: "כרטיס משולב לבזיליקה ולתצפית", when: "8.11 15:00", urgency: "low",
       note: "קונים אונליין, ובכרטיס המשולב התצפית הפנורמית כלולה. מממשים בדלפק כ-50 מ' מהכניסה, בלי תור." },
@@ -281,6 +281,9 @@ window.TRIP = {
     { title: "budapest4t: סיור לעיקול הדנובה", verdict: "partial", note: "לקחנו ממנו את טעימות היין, את המרציפן ואת בית התפילה. רנסאנס נשאר ב\"אולי\", ובמקומה קובאץ'-קרט. המזחלות סגורות ביום שני." },
     { title: "שאר הרילס", verdict: "pending", note: "אם נשאר עוד, שלחו." }
   ],
+
+  // ברירת מחדל ל"מה לומר למלצר" בכל מקום אוכל
+  defaultSay: {"en": "Hello! We have some dietary requirements: no pork or pork products (including lard, bacon, ham, sausages and pork stock), no seafood or shellfish (fish is fine), no mixing of meat and dairy in the same dish (no butter, cream or cheese with meat), and no fava beans for my wife. Could you help us choose? Thank you!", "hu": "Kérem, sertéshús, disznózsír, szalonna és tenger gyümölcsei nélkül. A húsos ételekhez ne tegyenek tejterméket (vajat, tejszínt, sajtot). A feleségem nem ehet lóbabot. Köszönjük!", "he": "שלום! יש לנו כמה מגבלות: בלי חזיר ומוצרי חזיר (כולל שומן חזיר, בייקון, נקניקים וציר חזיר), בלי פירות ים (דגים זה בסדר), בלי ערבוב בשר וחלב באותה מנה (בלי חמאה, שמנת או גבינה עם בשר), ובלי פול לאשתי. אפשר לעזור לנו לבחור? תודה!"},
 
   emergency: [
     { label: "מספר חירום (משטרה, אמבולנס, כיבוי)", value: "112" },
