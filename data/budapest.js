@@ -41,7 +41,7 @@ window.TRIP = {
     { id: "castle", name: "Buda Castle", he: "ארמון בודה", layer: "sights", status: "must", tags: ["view"], q: "Buda Castle", lat: 47.4961, lng: 19.0396,
       why: "שיטוט בחצרות ובטרסות, עם נוף לפשט. את המוזיאונים בפנים אפשר לדלג. עולים במעלית החינמית \"Lift a várba\" מכיכר Ybl Miklós, ולא ברכבל." },
     { id: "liberty", name: "Liberty Statue, Gellért Hill", he: "גבעת גלרט ופסל החירות", layer: "sights", status: "must", tags: ["view"], q: "Liberty Statue Budapest", lat: 47.4867, lng: 19.0472,
-      why: "התצפית הכי רחבה על העיר. עלייה של כ-20–30 דקות, מתאימה לשלומי. לאדווה יש אפשרות לעלות במונית ולהיפגש למעלה." },
+      why: "התצפית הכי רחבה על העיר. המצודה (Citadella) שעל הגבעה נפתחה מחדש באפריל 2026, אחרי 11 שנות שיפוץ: יש בה גנים פתוחים 24/7 בחינם, מעליות, בית קפה ותערוכה. שלומי עולה ברגל מגשר החירות או מגשר אליזבת, 20–30 דק'. אדווה יכולה לעלות באוטובוס 27 ממוריץ ז'יגמונד קורטר עד התחנה Búsuló Juhász, ומשם 5–7 דק' הליכה, או במונית" },
     { id: "basilica", name: "St. Stephen's Basilica", he: "בזיליקת סנט סטפן", layer: "sights", status: "nice", tags: ["view","quick"], q: "St. Stephen's Basilica", lat: 47.5009, lng: 19.0539,
       why: "חמש דקות הליכה מהמלון. כדאי לקנות אונליין כרטיס משולב עם התצפית הפנורמית מהכיפה (360° על כל העיר). את הכרטיס מממשים בדלפק כ-50 מ' מהכניסה, בלי תור. הכי שקט ב-9:00. אחרי המעלית יש עוד כ-20 מדרגות. (BudaBest)" },
     { id: "opera", name: "Hungarian State Opera", he: "בית האופרה", layer: "sights", status: "nice", tags: ["quick"], q: "Hungarian State Opera House", lat: 47.5027, lng: 19.0584,
