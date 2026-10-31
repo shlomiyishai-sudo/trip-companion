@@ -232,7 +232,7 @@ window.TRIP = {
     { id: "highnote", title: "שולחן ב-High Note", when: "10.11 20:00", urgency: "mid",
       note: "להזמין באתר highnoteskybar.hu, ולבקש את החלק המקורה עם הנוף לבזיליקה." },
     { id: "aleli", say: {"en": "Hello! A few dietary requests, please: no pork at all. Could you check the pasta sauces for guanciale, pancetta or prosciutto (for example carbonara or amatriciana)? No seafood (fish is fine). We don't mix meat and dairy, so meat dishes without cheese, butter or cream. Cheese pizzas and pastas without meat are perfect. No fava beans for my wife. Thank you!", "he": "שלום! כמה בקשות: בלי חזיר בכלל. אפשר לבדוק שברטבי הפסטה אין גואנצ'לה, פנצ'טה או פרושוטו (למשל בקרבונרה או באמטריצ'אנה)? בלי פירות ים (דגים זה בסדר). אנחנו לא מערבבים בשר וחלב, אז מנות בשר בלי גבינה, חמאה או שמנת. פיצות ופסטות עם גבינה בלי בשר מצוינות. ובלי פול לאשתי. תודה!"}, title: "שולחן באללי", when: "9.11 19:30", urgency: "mid",
-      note: "הזמנה באתר aleli.hu. בהערות: no pork, no seafood, no mixing meat and dairy." },
+      note: "מזמינים באתר aleli.hu, ל-9.11 ב-19:30 ל-2 סועדים. את הנוסח הזה מדביקים בשדה ההערות: We keep kosher-style: no pork or pork products (please check pasta sauces for guanciale, pancetta or prosciutto), no seafood or shellfish (fish is fine), and no mixing of meat and dairy (no cheese, butter or cream in meat dishes). My wife cannot eat fava beans. Thank you!" },
     { id: "basilica", title: "כרטיס משולב לבזיליקה ולתצפית", when: "8.11 15:00", urgency: "low",
       note: "קונים אונליין, ובכרטיס המשולב התצפית הפנורמית כלולה. מממשים בדלפק כ-50 מ' מהכניסה, בלי תור." },
     { id: "szechenyi", title: "כרטיסי סצ'ני עם תא פרטי", when: "10.11 אחה\"צ", urgency: "low",
