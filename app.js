@@ -271,30 +271,32 @@ async function renderToday() {
       const l = await leg(prev, p);
       if (l.mode === "WALK") { tot.walkM += l.m; tot.walkS += l.sec; } else tot.transS += l.sec;
       longest = Math.max(longest, l.sec);
-      legHtml = `<li class="ti-item"><div></div><div class="leg ${l.sec > 1800 ? "long" : ""}">${l.mode === "WALK" ? "🚶" : "🚇"} ${fmtMin(l.sec)}${l.mode === "WALK" ? " · " + fmtDist(l.m) : " בתחבורה"}${l.est ? " (הערכה)" : ""}${l.sec > 1800 && l.mode === "WALK" ? " · מעל 30 דק', שווה מטרו או Bolt" : ""}</div></li>`;
+      legHtml = `<li class="ti-item"><div class="leg ${l.sec > 1800 ? "long" : ""}">${l.mode === "WALK" ? "🚶" : "🚇"} ${fmtMin(l.sec)}${l.mode === "WALK" ? " · " + fmtDist(l.m) : " בתחבורה"}${l.est ? " (הערכה)" : ""}${l.sec > 1800 && l.mode === "WALK" ? " · מעל 30 דק', שווה מטרו או Bolt" : ""}</div></li>`;
     }
     if (p && !isRem) prev = p;
     const c = p && info(p.id);
     const rk = esc(itemKey(d, it));
-    rows.push(legHtml + `<li class="ti-item ${isRem ? "removed" : ""} ${it.mine ? "mine" : ""}"><div class="ti-time">${esc(it.time)}</div>
-      <div class="ti-row">
-      <button class="ti-card ${it.anchor ? "anchor" : ""}" ${p ? `data-place="${p.id}"` : "disabled"}>
-        ${p ? `<span class="dot" style="background:${colorOf(p)}"></span>` : `<span class="dot" style="background:var(--line)"></span>`}
-        <span class="tx"><span class="nm">${esc(it.text)}</span>
-          ${p ? `<span class="sb">${esc(p.he)}${c && c.rating ? ` · ★ ${c.rating}` : ""}</span>` : ""}
-          <span class="tags">${it.anchor ? `<span class="pill anchor">עוגן</span>` : ""}${it.book ? (bookDone[it.book] ? `<span class="pill ok">הוזמן</span>` : `<span class="pill book">להזמין</span>`) : ""}${(it.alt||[]).length ? `<span class="pill">+ ${it.alt.length} חלופות</span>` : ""}${p && statusOf(p)==="visited" ? `<span class="pill ok">ביקרנו</span>` : ""}</span>
-        </span>
-        ${c && c.photo ? `<img class="thumb" src="${esc(c.photo)}" alt="" loading="lazy">` : ""}
-      </button>
-      ${it.book && T.bookings.find(b => b.id === it.book) ? `<button class="rm nb ${bookDone[it.book] ? "bk-ok" : "bk-todo"}" data-bk="${it.book}" aria-label="פרטי ההזמנה" title="פרטי ההזמנה">🎫</button>` : ""}
-      ${p && sayOf(p) ? `<button class="rm nb" data-sayp="${p.id}" aria-label="מה לומר" title="מה לומר">🗣</button>` : ""}
-      <button class="rm nb" data-note="${rk}" aria-label="הערה" title="הערה">📝</button>
-      ${it.mine ? `<button class="rm" data-idea="${esc(it.place.slice(5))}" aria-label="מחיקת ההצעה" title="מחיקת ההצעה">✕</button>`
-        : `<button class="rm" data-rm="${rk}" data-time="${esc(it.time)}" aria-label="${isRem ? "ביטול ההסרה" : "להסיר מהתוכנית"}" title="${isRem ? "ביטול ההסרה" : "להסיר מהתוכנית"}">${isRem ? "↺" : "✕"}</button>`}
-      </div>${isRem ? `<div class="rm-note">יוסר בעדכון הבא · ↺ לביטול</div>` : ""}${notes["it:" + itemKey(d, it)] ? `<div class="mynote ti-n">📝 ${esc(notes["it:" + itemKey(d, it)])}</div>` : ""}</li>`);
+    const nk = "it:" + itemKey(d, it);
+    rows.push(legHtml + `<li class="ti-item ${isRem ? "removed" : ""} ${it.mine ? "mine" : ""}">
+      <div class="ti-box ${it.anchor ? "anchor" : ""}">
+        <button class="ti-main" ${p ? `data-place="${p.id}"` : "disabled"}>
+          <span class="ti-head"><span class="ti-t">${esc(it.time)}</span>${p ? `<span class="dot" style="background:${colorOf(p)}"></span><span class="sb">${esc(p.he)}${c && c.rating ? ` · ★ ${c.rating}` : ""}</span>` : ""}
+            <span class="tags">${it.anchor ? `<span class="pill anchor">עוגן</span>` : ""}${it.book ? (bookDone[it.book] ? `<span class="pill ok">הוזמן</span>` : `<span class="pill book">להזמין</span>`) : ""}${(it.alt||[]).length ? `<span class="pill">+ ${it.alt.length} חלופות</span>` : ""}${p && statusOf(p)==="visited" ? `<span class="pill ok">ביקרנו</span>` : ""}</span></span>
+          <span class="nm">${esc(it.text)}</span>
+          <span class="ti-photo">${c && c.photo ? `<img src="${esc(c.photo)}" alt="" loading="lazy">` : ""}</span>
+        </button>
+        ${isRem ? `<div class="rm-note">יוסר בעדכון הבא · ↺ לביטול</div>` : ""}${notes[nk] ? `<div class="mynote">📝 ${esc(notes[nk])}</div>` : ""}
+        <div class="ti-acts">
+          ${it.book && T.bookings.find(b => b.id === it.book) ? `<button class="act ${bookDone[it.book] ? "bk-ok" : "bk-todo"}" data-bk="${it.book}">🎫 ${bookDone[it.book] ? "ההזמנה" : "להזמין"}</button>` : ""}
+          ${p && sayOf(p) ? `<button class="act" data-sayp="${p.id}">🗣 מה לומר</button>` : ""}
+          <button class="act" data-note="${rk}">📝 הערה</button>
+          ${it.mine ? `<button class="act" data-idea="${esc(it.place.slice(5))}">✕ מחיקה</button>`
+            : `<button class="act" data-rm="${rk}" data-time="${esc(it.time)}">${isRem ? "↺ ביטול" : "✕ להסיר"}</button>`}
+        </div>
+      </div></li>`);
   }
   if (tok !== renderToday.tok) return;
-  tl.innerHTML = rows.join("") + `<li class="ti-item"><div></div><button class="add-day" id="addToDay">➕ להוסיף משהו ליום הזה</button></li>`;
+  tl.innerHTML = rows.join("") + `<li class="ti-item"><button class="add-day" id="addToDay">➕ להוסיף משהו ליום הזה</button></li>`;
   $("#addToDay").onclick = () => openAdd(day);
   tl.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { const k = b.dataset.rm;
     if (removed[k]) delete removed[k]; else removed[k] = { date: d.date, time: b.dataset.time, text: k.split("|").slice(1).join("|") };
@@ -309,7 +311,7 @@ async function renderToday() {
   // השלמת תמונות ודירוגים ברקע
   for (const it of d.items) { const p = it.place && P[it.place]; if (p && !info(p.id)) { resolve(p).then(() => { if (view === "today" && T.days[day] === d) patchThumbs(); }); } }
 }
-function patchThumbs() { document.querySelectorAll(".ti-card[data-place]").forEach(b => { const c = info(b.dataset.place); if (c && c.photo && !b.querySelector(".thumb")) b.insertAdjacentHTML("beforeend", `<img class="thumb" src="${esc(c.photo)}" alt="" loading="lazy">`); const sb = b.querySelector(".sb"); if (c && c.rating && sb && !sb.textContent.includes("★")) sb.textContent += " · ★ " + c.rating; }); }
+function patchThumbs() { document.querySelectorAll(".ti-main[data-place]").forEach(b => { const c = info(b.dataset.place); const ph = b.querySelector(".ti-photo"); if (c && c.photo && ph && !ph.querySelector("img")) ph.innerHTML = `<img src="${esc(c.photo)}" alt="" loading="lazy">`; const sb = b.querySelector(".sb"); if (c && c.rating && sb && !sb.textContent.includes("★")) sb.textContent += " · ★ " + c.rating; }); }
 function pickTips(d) {
   const ids = d.items.map(i => i.place); const t = T.tips;
   const out = [t[0], t[1]]; const byT = n => t.find(x => x.t === n); if (day === 0) out.unshift(byT("מהשדה למלון")); if (ids.includes("lift-var")) out.unshift(byT("המעלית לארמון"));

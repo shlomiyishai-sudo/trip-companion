@@ -1,7 +1,7 @@
 // התוכנית היומית והמצב המשותף. האפליקציה כותבת לקובץ הזה ישירות כשלוחצים "שמירה וסנכרון".
 window.PLAN = {
- "rev": 22,
- "updated": "2026-10-31T18:13:01.152Z",
+ "rev": 23,
+ "updated": "2026-10-31T22:14:26.138Z",
  "by": "Claude",
  "days": [
   {
@@ -171,7 +171,8 @@ window.PLAN = {
      "place": "aleli",
      "alt": [
       "comme-chez-soi",
-      "divino"
+      "divino",
+      "newyork"
      ],
      "book": "aleli",
      "anchor": true
@@ -331,7 +332,8 @@ window.PLAN = {
      "place": "ramsay",
      "alt": [
       "borkonyha",
-      "comme-chez-soi"
+      "comme-chez-soi",
+      "newyork"
      ],
      "anchor": true,
      "book": "special-dinner"
