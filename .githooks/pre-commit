@@ -1,0 +1,4 @@
+#!/bin/sh
+# בדיקת תקינות לפני כל שמירה: אם קובץ נתונים או קוד שבור, השמירה נעצרת
+node -e "global.window={};require('./data/budapest.js');require('./data/plan.js')" || { echo "data file broken"; exit 1; }
+node --check app.js || exit 1
