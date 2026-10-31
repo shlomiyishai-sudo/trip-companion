@@ -270,6 +270,7 @@ async function renderToday() {
         </span>
         ${c && c.photo ? `<img class="thumb" src="${esc(c.photo)}" alt="" loading="lazy">` : ""}
       </button>
+      ${p && sayOf(p) ? `<button class="rm nb" data-sayp="${p.id}" aria-label="מה לומר למלצר" title="מה לומר למלצר">🗣</button>` : ""}
       <button class="rm nb" data-note="${rk}" aria-label="הערה" title="הערה">📝</button>
       ${it.mine ? `<button class="rm" data-idea="${esc(it.place.slice(5))}" aria-label="מחיקת ההצעה" title="מחיקת ההצעה">✕</button>`
         : `<button class="rm" data-rm="${rk}" data-time="${esc(it.time)}" aria-label="${isRem ? "ביטול ההסרה" : "להסיר מהתוכנית"}" title="${isRem ? "ביטול ההסרה" : "להסיר מהתוכנית"}">${isRem ? "↺" : "✕"}</button>`}
@@ -281,6 +282,7 @@ async function renderToday() {
   tl.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { const k = b.dataset.rm;
     if (removed[k]) delete removed[k]; else removed[k] = { date: d.date, time: b.dataset.time, text: k.split("|").slice(1).join("|") };
     store.set("removed", removed); toast(removed[k] ? "סומן להסרה. ייכנס לעדכון הבא" : "ההסרה בוטלה"); renderToday(); });
+  tl.querySelectorAll("[data-sayp]").forEach(b => b.onclick = () => { const p = P[b.dataset.sayp]; openSay(sayOf(p), p.he); });
   tl.querySelectorAll("[data-note]").forEach(b => b.onclick = () => { const k = b.dataset.note; editNote("it:" + k, k.split("|").slice(1).join("|"), renderToday); });
   tl.querySelectorAll("[data-idea]").forEach(b => b.onclick = () => deleteIdea(b.dataset.idea));
   const busy = tot.walkM > 12000;
@@ -477,6 +479,8 @@ function renderDocs() {
     <h3 class="sec-title">הטיפים של הטיול</h3>
     <div class="tips">${T.tips.map(t => `<div class="tip"><b>${esc(t.t)}</b>${esc(t.d)}</div>`).join("")}</div>
     <h3 class="sec-title">גוגל מפס</h3>
+    <div class="doc"><h3>⭐ שמירה לרשימה "בודפשט 2026" בגוגל מפס</h3><div>גוגל לא מאפשרת לאפליקציה אחרת להוסיף מקומות לרשימה שלך, אז עוברים על המקומות אחד-אחד: לוחצים, גוגל מפס נפתח על המקום, לוחצים "שמירה" ובוחרים "בודפשט 2026", וחוזרים. האפליקציה זוכרת מה כבר נשמר.</div>
+      <div class="row" style="margin-top:8px"><button class="btn acc" id="gmList">פתיחת רשימת השמירה</button></div></div>
     <div class="doc"><div>מוריד קובץ עם כל המקומות לפי שכבות. מייבאים אותו פעם אחת ל-Google My Maps, ואז כל השכבות מופיעות גם באפליקציית גוגל מפס, תחת "שמורים" ← "מפות".</div>
       <div class="row" style="margin-top:8px"><button class="btn" id="kmlAll">ייצוא כל המקומות</button><button class="btn ghost" id="kmlVisited">ייצוא "ביקרנו"</button><a class="btn ghost" href="https://www.google.com/maps/d/" target="_blank" rel="noopener">פתח את My Maps</a></div></div>
     <div class="row" style="margin-top:14px"><button class="btn ghost" id="diag2">🔧 בדיקת חיבור לגוגל</button></div>
@@ -494,8 +498,27 @@ function renderDocs() {
   $("#diag2").onclick = diagnose; $("#sendChg").onclick = sendChanges; $("#addIdea").onclick = () => openAdd(null);
   el.querySelectorAll("[data-book]").forEach(i => i.onchange = () => { bookDone[i.dataset.book] = i.checked; store.set("booked", bookDone); markShared(); renderDocs(); });
   $("#shopping").oninput = e => store.set("shopping", e.target.value);
+  $("#gmList").onclick = openGmList;
   $("#kmlAll").onclick = () => kml(T.places.filter(p => statusOf(p) !== "skip"), "budapest-all");
   $("#kmlVisited").onclick = () => { const v = T.places.filter(p => statusOf(p) === "visited"); if (!v.length) return toast("עוד לא סימנתם מקומות כ\"ביקרנו\""); kml(v, "budapest-visited"); };
+}
+let gmSaved = store.get("gmSaved", {});
+function openGmList() {
+  const order = [], seen = new Set();
+  T.days.forEach(d => d.items.forEach(it => { if (it.place && !seen.has(it.place) && P[it.place] && P[it.place].layer !== "hotel" && !P[it.place].id.startsWith("bus27")) { seen.add(it.place); order.push(P[it.place]); } }));
+  const rest = T.places.filter(p => !seen.has(p.id) && p.layer !== "hotel" && !p.id.startsWith("bus27") && statusOf(p) !== "skip");
+  const all = [HOTEL, ...order, ...rest];
+  const done = () => all.filter(p => gmSaved[p.id]).length;
+  const row = p => `<div class="gmrow ${gmSaved[p.id] ? "ok" : ""}" data-gm="${p.id}"><a class="btn ${gmSaved[p.id] ? "ghost" : ""} sm" href="${gmapsPlace(p)}" target="_blank" rel="noopener" data-gmopen="${p.id}">פתיחה ↗</a><span class="tx">${esc(p.he)}<small>${esc(p.name)}</small></span><label><input type="checkbox" data-gmchk="${p.id}" ${gmSaved[p.id] ? "checked" : ""}> נשמר</label></div>`;
+  openSheet(`<h2>⭐ שמירה ל"בודפשט 2026"</h2>
+    <p class="small">בכל מקום: <b>פתיחה ↗</b> ← בגוגל מפס לוחצים <b>שמירה</b> ← בוחרים <b>בודפשט 2026</b> ← חוזרים לכאן. המקום מסומן "נשמר" אוטומטית.</p>
+    <p class="small"><b id="gmCount">${done()}</b> מתוך ${all.length} נשמרו · קודם המקומות שבתוכנית, אחר כך כל השאר</p>
+    <div class="list">${all.map(row).join("")}</div>`);
+  const sh = $("#sheet");
+  const mark = (id, v) => { if (v) gmSaved[id] = 1; else delete gmSaved[id]; store.set("gmSaved", gmSaved); const r = sh.querySelector(`[data-gm="${id}"]`); if (r) { r.classList.toggle("ok", !!v); r.querySelector("input").checked = !!v; } const c = $("#gmCount"); if (c) c.textContent = done(); };
+  sh.querySelectorAll("[data-gmopen]").forEach(a => a.addEventListener("click", () => setTimeout(() => mark(a.dataset.gmopen, true), 400)));
+  sh.querySelectorAll("[data-gmchk]").forEach(c => c.onchange = () => mark(c.dataset.gmchk, c.checked));
+  all.forEach(p => { if (!info(p.id)) resolve(p).then(() => { const a = sh.querySelector(`[data-gmopen="${p.id}"]`); if (a) a.href = gmapsPlace(p); }); });
 }
 function kml(list, name) {
   const groups = {};
