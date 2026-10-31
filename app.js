@@ -37,6 +37,14 @@ const itemKey = (d, it) => d.date + "|" + it.text;
 let notes = Object.assign({}, shared.notes || {}, store.get("notes", {}));        // key -> text ("" = נמחק)
 let hiddenInbox = store.get("hiddenInbox", {});
 const noteHtml = k => notes[k] ? `<div class="mynote">📝 ${esc(notes[k])}</div>` : "";
+function openSay(say, title) {
+  openSheet(`<h2>🗣 מה לומר${title ? " · " + esc(title) : ""}</h2>
+    <div class="say-en" dir="ltr" lang="en">${esc(say.en)}</div>
+    <div class="muted small" style="margin:8px 0">${esc(say.he)}</div>
+    <div class="row"><button class="btn acc" id="sayCopy">העתקה</button><button class="btn ghost" id="sayBig">הגדלה להצגה למלצר</button></div>`);
+  $("#sayCopy").onclick = async () => { try { await navigator.clipboard.writeText(say.en); toast("הועתק"); } catch { toast("סמן את הטקסט והעתק"); } };
+  $("#sayBig").onclick = () => $("#sheet .say-en").classList.toggle("big");
+}
 function editNote(k, title, after) {
   openSheet(`<h2>📝 הערה</h2><p class="muted small">${esc(title)}</p>
     <div class="form"><textarea id="noteTxt" rows="4" placeholder="כתוב כאן הערה…">${esc(notes[k] || "")}</textarea>
@@ -298,7 +306,7 @@ async function openPlace(p) {
       <h2>${esc(p.he)}</h2><div class="en">${esc(p.name)}${c && c.addr ? " · " + esc(c.addr) : ""}</div>
       ${c && c.photo ? `<img class="photo" src="${esc(c.photo)}" alt="${esc(p.he)}">` : ""}
       <div class="why"><b>למה זה מתאים לנו:</b> ${esc(p.why)}</div>
-      ${noteHtml("pl:" + p.id)}<button class="btn ghost sm" id="plNote">📝 ${notes["pl:" + p.id] ? "עריכת ההערה שלי" : "הוספת הערה"}</button>
+      ${p.say ? `<button class="btn acc sm" id="plSay" style="margin-inline-end:6px">🗣 מה לומר למלצר</button>` : ""}${noteHtml("pl:" + p.id)}<button class="btn ghost sm" id="plNote">📝 ${notes["pl:" + p.id] ? "עריכת ההערה שלי" : "הוספת הערה"}</button>
       <div class="facts">
         ${c && c.rating ? `<div><span class="k">ציון בגוגל:</span> ★ ${c.rating} (${(c.count||0).toLocaleString("he-IL")} ביקורות)${c.price ? " · " + c.price : ""}</div>` : ""}
         ${open != null ? `<div><span class="k">עכשיו:</span> ${open ? "<b style='color:var(--ok)'>פתוח</b>" : "<b style='color:var(--bad)'>סגור</b>"}</div>` : ""}
@@ -313,6 +321,7 @@ async function openPlace(p) {
       </div>
       ${p.layer !== "hotel" ? `<div class="status" role="group" aria-label="סימון">${Object.entries(STATUS).map(([k, v]) => `<button data-st="${k}" class="${st === k ? "on" : ""}">${v}</button>`).join("")}</div>` : ""}
     `);
+    if (p.say) $("#plSay").onclick = () => openSay(p.say, p.he);
     $("#plNote").onclick = () => editNote("pl:" + p.id, p.he, () => openPlace(p));
     $("#showOnMap").onclick = () => { closeSheet(); mapLayer = "all"; go("map").then(() => focusPlace(p)); };
     $("#sheet").querySelectorAll("[data-st]").forEach(b => b.onclick = () => { statusOv[p.id] = b.dataset.st; store.set("status", statusOv); markShared(); draw(info(p.id), open); toast("סומן: " + STATUS[b.dataset.st]); refreshMarkers(); });
@@ -453,7 +462,7 @@ function renderDocs() {
       <div class="doc"><h3>🔒 מסמכים אישיים</h3><div>צילומי דרכונים, אישורי הזמנה ומספרי הזמנה יישמרו באזור פרטי שנוסיף בגרסה הבאה, מוגן בסיסמה ומסונכרן ביניכם.</div></div>
     </div>
     <h3 class="sec-title">מה צריך להזמין</h3>
-    <div class="book-list">${T.bookings.map(b => `<div class="book ${bookDone[b.id] ? "done" : ""}"><div class="bt"><span>${esc(b.title)}</span><span class="pill ${b.urgency === "high" && !bookDone[b.id] ? "book" : ""}">${esc(b.when)}</span></div><p>${esc(b.note)}</p>${noteHtml("bk:" + b.id)}<div class="row"><label><input type="checkbox" data-book="${b.id}" ${bookDone[b.id] ? "checked" : ""}> הוזמן</label><button class="btn ghost sm" data-bnote="${b.id}">📝 ${notes["bk:" + b.id] ? "עריכת הערה" : "הערה"}</button></div></div>`).join("")}</div>
+    <div class="book-list">${T.bookings.map(b => `<div class="book ${bookDone[b.id] ? "done" : ""}"><div class="bt"><span>${esc(b.title)}</span><span class="pill ${b.urgency === "high" && !bookDone[b.id] ? "book" : ""}">${esc(b.when)}</span></div><p>${esc(b.note)}</p>${noteHtml("bk:" + b.id)}<div class="row">${b.say ? `<button class="btn acc sm" data-say="${b.id}">🗣 מה לומר למלצר</button>` : ""}<label><input type="checkbox" data-book="${b.id}" ${bookDone[b.id] ? "checked" : ""}> הוזמן</label><button class="btn ghost sm" data-bnote="${b.id}">📝 ${notes["bk:" + b.id] ? "עריכת הערה" : "הערה"}</button></div></div>`).join("")}</div>
     <details class="inbox" ${store.get("inboxOpen", false) ? "open" : ""}><summary class="sec-title">המלצות מהקבוצה <span class="muted small">(${(T.inbox||[]).filter(x => !hiddenInbox[x.title]).length})</span></summary>
     <p class="muted small">✕ מסתיר המלצה שכבר טופלה. ↺ בתחתית מחזיר את כולן.</p>
     <div class="book-list">${(T.inbox||[]).filter(x => !hiddenInbox[x.title]).map(x => `<div class="book"><div class="bt"><span>${esc(x.title)}</span><span class="row nowrap"><span class="pill ${({yes:"ok",no:"book",pending:"warn",partial:"warn"})[x.verdict]||""}">${({yes:"נכנס",no:"לא מתאים",replaced:"הוחלף",partial:"חלקי",pending:"ממתין"})[x.verdict]}</span><button class="rm" data-hideinbox="${esc(x.title)}" aria-label="הסתרה">✕</button></span></div><p>${esc(x.note)}</p>${noteHtml("ib:" + x.title)}<button class="btn ghost sm" data-inote="${esc(x.title)}">📝 ${notes["ib:" + x.title] ? "עריכת הערה" : "הערה"}</button></div>`).join("")}</div>
@@ -473,6 +482,7 @@ function renderDocs() {
   el.querySelectorAll("[data-unrm]").forEach(b => b.onclick = () => { delete removed[b.dataset.unrm]; store.set("removed", removed); renderDocs(); });
   el.querySelectorAll("[data-unskip]").forEach(b => b.onclick = () => { delete statusOv[b.dataset.unskip]; store.set("status", statusOv); renderDocs(); });
   el.querySelectorAll("[data-delidea]").forEach(b => b.onclick = () => deleteIdea(b.dataset.delidea));
+  el.querySelectorAll("[data-say]").forEach(b => b.onclick = () => { const x = T.bookings.find(y => y.id === b.dataset.say); openSay(x.say, x.title.replace("✅ ", "")); });
   el.querySelectorAll("[data-bnote]").forEach(b => b.onclick = () => { const x = T.bookings.find(y => y.id === b.dataset.bnote); editNote("bk:" + x.id, x.title, renderDocs); });
   el.querySelectorAll("[data-inote]").forEach(b => b.onclick = () => editNote("ib:" + b.dataset.inote, b.dataset.inote, renderDocs));
   el.querySelectorAll("[data-hideinbox]").forEach(b => b.onclick = () => { hiddenInbox[b.dataset.hideinbox] = 1; store.set("hiddenInbox", hiddenInbox); renderDocs(); });

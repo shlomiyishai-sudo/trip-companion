@@ -197,3 +197,6 @@ body.board-open{overflow:hidden}
 @media (min-width:900px){#board .bcol{flex:1 1 0;min-width:200px}}
 #board .bcard .bx{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 @media (min-width:900px){#board .bcol{min-width:165px}}
+
+.say-en{font-size:18px;line-height:1.5;background:var(--chip);border-radius:12px;padding:12px 14px;margin-top:10px;text-align:left;user-select:text}
+.say-en.big{font-size:26px;font-weight:600}
