@@ -711,7 +711,8 @@ function applyShared(pl) {
 }
 let syncTimer = null, syncing = false;
 function markShared(daysChanged) {
-  planDirty = true; store.set("plan", { ...shared, dirty: true, daysDirty: daysChanged || (store.get("plan", {}) || {}).daysDirty || false });
+  const prev = store.get("plan", {}) || {};
+  planDirty = true; store.set("plan", { ...shared, dirty: true, daysDirty: daysChanged || prev.daysDirty || false, baseRev: prev.dirty && prev.baseRev != null ? prev.baseRev : (shared.rev || 0) });
   if (ghToken) { clearTimeout(syncTimer); syncTimer = setTimeout(syncNow, 1200); }
 }
 async function syncNow(silent) {
@@ -720,9 +721,10 @@ async function syncNow(silent) {
   try {
     const lp = store.get("plan", {}) || {};
     const { sha, plan: remote } = await fetchRemote();
+    if (lp.daysDirty && (remote.rev || 0) > (lp.baseRev ?? 0)) toast("התוכנית עודכנה בינתיים במכשיר אחר, ולכן שינויי הלוח מהמכשיר הזה לא נשמרו. כדאי לפתוח את הלוח ולבצע אותם שוב", 7000);
     const merged = {
       rev: (remote.rev || 0) + 1, updated: new Date().toISOString(), by: navigator.userAgent.includes("iPad") ? "טאבלט" : "טלפון",
-      days: lp.daysDirty ? shared.days : remote.days,
+      days: (lp.daysDirty && (remote.rev || 0) <= (lp.baseRev ?? shared.rev ?? 0)) ? shared.days : remote.days,
       notes: Object.assign({}, remote.notes || {}, notes), status: Object.assign({}, remote.status || {}, statusOv), booked: Object.assign({}, remote.booked || {}, bookDone)
     };
     const body = { message: "עדכון תוכנית מהאפליקציה (rev " + merged.rev + ")", content: b64e("// התוכנית היומית והמצב המשותף. האפליקציה כותבת לקובץ הזה ישירות כשלוחצים \"שמירה וסנכרון\".\nwindow.PLAN = " + JSON.stringify(merged, null, 1) + ";\n"), sha, branch: "main" };
