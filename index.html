@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700&family=Assistant:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="app.css?v=17">
+<link rel="stylesheet" href="app.css?v=22">
 </head>
 <body>
 <header class="top">
@@ -24,7 +24,7 @@
       <div class="trip-sub" id="tripSub"></div>
       <h1 id="tripTitle">טוען…</h1>
     </div>
-    <div class="wx" id="wxNow" aria-live="polite"></div>
+    <div class="hdr-r"><div class="wx" id="wxNow" aria-live="polite"></div><button class="boardbtn" id="boardBtn" aria-label="לוח התכנון">🗂 לוח <span id="syncBadge"></span></button></div>
   </div>
   <nav class="days" id="dayChips" aria-label="ימי הטיול"></nav>
 </header>
@@ -53,8 +53,9 @@
 <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="config.js?v=17"></script>
-<script src="data/budapest.js?v=17"></script>
-<script src="app.js?v=17"></script>
+<script src="config.js?v=22"></script>
+<script src="data/budapest.js?v=22"></script>
+<script src="data/plan.js?v=22"></script>
+<script src="app.js?v=22"></script>
 </body>
 </html>
