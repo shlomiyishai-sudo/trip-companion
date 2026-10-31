@@ -1,7 +1,7 @@
 // התוכנית היומית והמצב המשותף. האפליקציה כותבת לקובץ הזה ישירות כשלוחצים "שמירה וסנכרון".
 window.PLAN = {
- "rev": 9,
- "updated": "2026-10-31T13:23:03.907Z",
+ "rev": 10,
+ "updated": "2026-10-31T13:33:08.128Z",
  "by": "Claude",
  "days": [
   {
@@ -230,12 +230,14 @@ window.PLAN = {
     },
     {
      "time": "21:00",
-     "text": "ארוחה הודית בבומביי, אחרי יום של טעימות הונגריות",
+     "text": "ארוחה הודית בבומביי, ליד הבזיליקה, אחרי יום של טעימות הונגריות",
      "place": "bombay",
      "alt": [
       "timeout-market",
       "pampushka"
-     ]
+     ],
+     "anchor": true,
+     "book": "bombay"
     }
    ]
   },
@@ -377,6 +379,7 @@ window.PLAN = {
  "booked": {
   "food-tour": true,
   "special-dinner": true,
-  "aleli": true
+  "aleli": true,
+  "bombay": true
  }
 };
