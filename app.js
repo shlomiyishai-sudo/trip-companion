@@ -21,8 +21,9 @@ if (localPlan && localPlan.dirty && (localPlan.rev || 0) >= (shared.rev || 0)) s
 let planDirty = !!(localPlan && localPlan.dirty && shared === localPlan);
 let ghToken = store.get("ghToken", "");
 T.days = shared.days.map(d => ({ ...d, items: d.items.slice() }));
-let statusOv = Object.assign({}, shared.status || {}, store.get("status", {}));   // id -> status
-let bookDone = Object.assign({}, shared.booked || {}, store.get("booked", {}));   // bookingId -> true
+let statusOv = Object.assign({}, shared.status || {}, planDirty ? store.get("status", {}) : {});   // id -> status
+let bookDone = Object.assign({}, shared.booked || {}, planDirty ? store.get("booked", {}) : {});
+Object.keys(shared.booked || {}).forEach(k => { if (shared.booked[k]) bookDone[k] = true; });   // bookingId -> true
 (T.bookings || []).forEach(b => { if (b.done && bookDone[b.id] === undefined) bookDone[b.id] = true; });
 const statusOf = p => statusOv[p.id] || p.status || "nice";
 const STATUS = { must: "חובה", booked: "הוזמן", nice: "נחמד", maybe: "אולי", visited: "ביקרנו", skip: "ויתרנו" };
@@ -34,7 +35,8 @@ const itemKey = (d, it) => d.date + "|" + it.text;
 // ניקוי הסרות שכבר טופלו בעדכון (הפריט כבר לא קיים בתוכנית)
 (() => { const live = new Set(); T.days.forEach(d => d.items.forEach(it => live.add(itemKey(d, it)))); let ch = false;
   Object.keys(removed).forEach(k => { if (!live.has(k)) { delete removed[k]; ch = true; } }); if (ch) store.set("removed", removed); })();
-let notes = Object.assign({}, shared.notes || {}, store.get("notes", {}));        // key -> text ("" = נמחק)
+let notes = Object.assign({}, shared.notes || {}, planDirty ? store.get("notes", {}) : {});        // key -> text ("" = נמחק)
+if (!planDirty) { store.set("notes", notes); store.set("status", statusOv); store.set("booked", bookDone); }
 let hiddenInbox = store.get("hiddenInbox", {});
 const noteHtml = k => notes[k] ? `<div class="mynote">📝 ${esc(notes[k])}</div>` : "";
 const sayOf = p => p.say || (p.layer === "food" || (p.layer === "maybe" && /restaurant|étterem|bistro|café|cafe|bar/i.test(p.name)) ? T.defaultSay : null);
