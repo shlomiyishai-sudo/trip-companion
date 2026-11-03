@@ -291,6 +291,7 @@ async function renderToday() {
         <div class="ti-acts">
           ${it.book && T.bookings.find(b => b.id === it.book) ? `<button class="act ${bookDone[it.book] ? "bk-ok" : "bk-todo"}" data-bk="${it.book}">🎫 ${bookDone[it.book] ? "ההזמנה" : "להזמין"}</button>` : ""}
           ${p && sayOf(p) ? `<button class="act" data-sayp="${p.id}">🗣 מה לומר</button>` : ""}
+          ${it.more ? `<button class="act" data-more="${d.items.indexOf(it)}">${esc(it.more.label)}</button>` : ""}
           <button class="act" data-note="${rk}">📝 הערה</button>
           ${it.mine ? `<button class="act" data-idea="${esc(it.place.slice(5))}">✕ מחיקה</button>`
             : `<button class="act" data-rm="${rk}" data-time="${esc(it.time)}">${isRem ? "↺ ביטול" : "✕ להסיר"}</button>`}
@@ -307,6 +308,8 @@ async function renderToday() {
   tl.querySelectorAll("[data-sayp]").forEach(b => b.onclick = () => { const p = P[b.dataset.sayp]; openSay(sayOf(p), p.he); });
   tl.querySelectorAll("[data-note]").forEach(b => b.onclick = () => { const k = b.dataset.note; editNote("it:" + k, k.split("|").slice(1).join("|"), renderToday); });
   tl.querySelectorAll("[data-idea]").forEach(b => b.onclick = () => deleteIdea(b.dataset.idea));
+  tl.querySelectorAll("[data-more]").forEach(b => b.onclick = () => { const m = d.items[+b.dataset.more].more;
+    openSheet(`<h2>${esc(m.label)}</h2><div class="why" style="white-space:pre-wrap">${esc(m.text)}</div>`); });
   const busy = tot.walkM > 12000;
   $("#dayStats").innerHTML = `🚶 <b>${fmtDist(tot.walkM)}</b> הליכה (${fmtMin(tot.walkS)})${tot.transS ? ` · 🚇 <b>${fmtMin(tot.transS)}</b> בתחבורה` : ""}${busy ? ` <span class="pill warn">יום ארוך ברגליים</span>` : ""} <button class="btn ghost" id="dayMap">על המפה</button>`;
   $("#dayMap").onclick = () => { mapLayer = "day"; go("map"); };
