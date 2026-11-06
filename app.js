@@ -488,6 +488,9 @@ function renderDocs() {
     </div>
     <h3 class="sec-title">טיסות ומלון</h3>
     <div class="docs">${T.docs.map(d => `<div class="doc"><h3>${d.kind === "flight" ? "✈️" : "🏨"} ${esc(d.title)}</h3>${d.lines.map(l => `<div>${esc(l)}</div>`).join("")}${d.place ? `<div class="row" style="margin-top:8px"><a class="btn ghost" href="${gmapsDir(P[d.place])}" target="_blank" rel="noopener">ניווט למלון</a></div>` : ""}</div>`).join("")}
+      ${(T.top12 || []).length ? `<div class="doc"><h3>📍 12 המקומות שאסור לפספס</h3><div class="muted small">מהמפה של Budapest Spotz. ליד כל מקום רשום באיזה יום הוא בתכנית.</div>
+        <div class="list" style="margin-top:8px">${T.top12.map((x, i) => { const di = T.days.findIndex(d => d.items.some(it => it.place === x.id || (x.also || []).includes(it.place))); const p = P[x.id];
+          return `<button class="ti-card" ${p ? `data-place="${p.id}"` : "disabled"}><b>${i + 1}.</b> ${esc(x.he)} <span class="pill ${di >= 0 ? "ok" : (x.note ? "warn" : "")}">${di >= 0 ? "יום " + (di + 1) + " · " + dayLabel(T.days[di]) : (x.note || "לא בתכנית")}</span></button>`; }).join("")}</div></div>` : ""}
       <div class="doc"><h3>🔒 מסמכים אישיים</h3><div>צילומי דרכונים, אישורי הזמנה ומספרי הזמנה יישמרו באזור פרטי שנוסיף בגרסה הבאה, מוגן בסיסמה ומסונכרן ביניכם.</div></div>
     </div>
     <div class="doc"><div>🎫 כל ההזמנות, הביטולים וההערות נמצאים עכשיו ב"תכנית החופשה", בכפתור 🎫 ליד כל פריט.</div></div>
