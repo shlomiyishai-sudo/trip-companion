@@ -54,7 +54,7 @@ window.TRIP = {
       why: "טירה מהאגדות על אגם בפארק העיר, 5 דקות מסצ'ני. יפה במיוחד בשעת בין ערביים." },
     { id: "margaret", name: "Margaret Island", he: "אי מרגיט", layer: "sights", status: "nice", tags: ["rest"], q: "Margaret Island Budapest", lat: 47.5270, lng: 19.0470,
       why: "טיול רגוע בפארק באמצע הנהר, בלי תנועה. טוב לשעה פנויה או ליום האחרון." },
-    { id: "szechenyi", name: "Széchenyi Thermal Bath", he: "מרחצאות סצ'ני", layer: "maybe", status: "maybe", tags: ["indoor","romantic","rest"], q: "Széchenyi Thermal Bath", lat: 47.5187, lng: 19.0817,
+    { id: "szechenyi", name: "Széchenyi Thermal Bath", he: "מרחצאות סצ'ני", layer: "maybe", status: "skip", tags: ["indoor","romantic","rest"], q: "Széchenyi Thermal Bath", lat: 47.5187, lng: 19.0817,
       why: "ויתרנו: שמענו מחברים ומביקורות אחרונות שהמקום מוזנח. במקומו רודאש ובריכת הגג במלון." },
     { id: "rudas", name: "Rudas Thermal Bath", he: "מרחצאות רודאש", layer: "sights", status: "must", tags: ["indoor","view","romantic"], q: "Rudas Thermal Bath", lat: 47.4890, lng: 19.0450,
       why: "בריכה עות'מאנית מהמאה ה-16, ובריכת גג חמה (36°) עם נוף לדנובה, לפרלמנט ולארמון. בבריכת הגג יש מקום ל-16 אנשים בלבד, לכן מגיעים כשעה לפני השקיעה. האמבט הטורקי משותף בשני, חמישי ושישי מ-11:00. בשלישי הוא לנשים בלבד, וברביעי לגברים בלבד. הגג והוולנס משותפים כל יום. כרטיס בימי חול: 12,000 פורינט. כדאי לקחת נרתיק עמיד למים לטלפון." },
@@ -70,7 +70,7 @@ window.TRIP = {
       why: "השוק המקורה ההיסטורי, ממש מול גשר החירות. בקומת הקרקע פפריקה, יין ומעדנים במחירים טובים, ולמעלה מזכרות ודוכני אוכל (יקר ותיירותי יותר). ביום חול פתוח 06:00–18:00, ביום ראשון רוב הדוכנים סגורים." },
     { id: "karavan", name: "Karaván street food", he: "קרוואן, אוכל רחוב", layer: "food", status: "nice", tags: ["quick"], q: "Karaván Street Food Budapest", lat: 47.4977, lng: 19.0627,
       why: "חצר של משאיות אוכל ברובע היהודי: לאנגוש, באו ועוד. מגוון, מהיר וזול. יש שם גם דוכן קירטוש שיאנוש ממליץ עליו, אולי זה מהטיקטוק של אדווה." },
-    { id: "mazeltov", name: "Mazel Tov", he: "מזל טוב", layer: "food", status: "maybe", tags: ["romantic","indoor"], q: "Mazel Tov Budapest Akácfa", lat: 47.5005, lng: 19.0640,
+    { id: "mazeltov", name: "Mazel Tov", he: "מזל טוב", layer: "food", status: "skip", tags: ["romantic","indoor"], q: "Mazel Tov Budapest Akácfa", lat: 47.5005, lng: 19.0640,
       why: "מסעדה ים-תיכונית וישראלית בחצר מקורה מלאה צמחייה ואורות, ב-Akácfa utca 47. BudaBest ממליצים עליה לדייט רומנטי. פתוחה מ-12:00, ומומלץ מאוד להזמין שולחן מראש." },
     { id: "borkonyha", name: "Borkonyha Winekitchen", he: "בורקוניה, מטבח ויין", layer: "food", status: "maybe", tags: ["romantic","indoor","drink"], q: "Borkonyha Winekitchen Budapest", lat: 47.4995, lng: 19.0510,
       why: "מועמדת לארוחה המיוחדת: מטבח הונגרי מודרני עם כוכב מישלן ורשימת יינות הונגריים ענקית. להזמין מראש, ולבקש מראש התאמה למגבלות." },
@@ -111,7 +111,7 @@ window.TRIP = {
       why: "חנות שוקולדים בסנטנדרה. ליאת ממליצה בעיקר על השוקו החם. עצירה מושלמת ביום קר. (מהרילס של ליאת)" },
     { id: "library", name: "Metropolitan Ervin Szabó Library", he: "ספריית ארווין סבו", layer: "sights", status: "maybe", tags: ["indoor","quick"], q: "Metropolitan Ervin Szabó Library Budapest", lat: 47.4893, lng: 19.0640,
       why: "חדרי קריאה היסטוריים בארמון ישן. ביקור קצר של 20–30 דקות, יפה מאוד ובלי תורים. טוב ליום גשום. (מהרילס \"15 דברים\")" },
-    { id: "night-cruise", name: "Evening Danube sightseeing cruise", he: "שיט שקיעה על הדנובה", layer: "sights", status: "must", tags: ["romantic","view"], q: "Legenda City Cruises Budapest Vigadó tér", lat: 47.4960, lng: 19.0480,
+    { id: "night-cruise", name: "Evening Danube sightseeing cruise", he: "שיט שקיעה על הדנובה", layer: "sights", status: "skip", tags: ["romantic","view"], q: "Legenda City Cruises Budapest Vigadó tér", lat: 47.4960, lng: 19.0480,
       why: "שיט שקיעה של שעה–שעה וחצי עם שתייה, בלי ארוחה, ביום הראשון. יוצאים מהרציפים בצד של פשט (ויגאדו), 10–15 דק' הליכה מהמלון. השקיעה ב-8.11 בסביבות 16:22. את הספק עוד בוחרים." },
     { id: "libego", name: "Zugliget Chairlift (Libegő)", he: "הרכבל הפתוח בגבעות בודה", layer: "sights", status: "nice", tags: ["view"], q: "Zugligeti Libegő", lat: 47.5163, lng: 18.9740,
       why: "רכבל כיסאות פתוח שעולה ביער לגבעת יאנוש, ומשם מגדל התצפית אליזבת. חצי יום, כ-40 דק' מהמלון. בנובמבר נסגר מוקדם ולא עובד ברוח חזקה, ולכן לא נכנס לטיול הזה. שווה לביקור באביב או בקיץ. (BudaBest)" },
@@ -208,6 +208,10 @@ window.TRIP = {
       why: "מעבר ארוך בין חצרות בלב הרובע היהודי, מואר בערב, עם ברים ומסעדות. 10 דק' הליכה מהמלון." },
     { id: "fox-autorent", name: "Fox Autorent Budapest City Office", he: "פוקס, איסוף והחזרת הרכב", layer: "sights", status: "must", tags: ["quick"], q: "Fox Autorent Hársfa utca 53-55 Budapest", lat: 47.5012, lng: 19.0676,
       why: "משרד ההשכרה בעיר, Hársfa utca 53-55 (רובע 7), כ-15 דק' הליכה מהמלון. פתוח 08:00–19:00. טלפון: +36 1 382 9000." },
+    { id: "arena-mall", name: "Arena Mall", he: "קניון ארנה", layer: "shop", status: "nice", tags: ["indoor"], q: "Arena Mall Budapest Kerepesi út 9", lat: 47.4992, lng: 19.0903,
+      why: "הקניון הגדול של בודפשט, ליד תחנת הרכבת קלטי: יותר מ-200 חנויות, ביניהן Zara, H&M, Bershka, Massimo Dutti, Nike, Adidas ו-Media Markt, וגם פריימארק וטסקו. מהמלון: מטרו M2 מכיכר דאק לתחנת Keleti pályaudvar, 3 תחנות, כ-20 דק'. את שעות הפתיחה כדאי לבדוק בגוגל מפס." },
+    { id: "bar-cruise", name: "Andrássy statue, Kossuth Lajos tér (cruise meeting point)", he: "נקודת המפגש לשיט: פסל אנדראשי", layer: "sights", status: "must", tags: ["romantic","view"], q: "Andrássy Gyula szobra Kossuth Lajos tér Budapest", lat: 47.5076, lng: 19.0460,
+      why: "נקודת המפגש לשיט של בודפשט עם בר: פסל הסוס של אנדראשי בכיכר קושוט, משמאל לבניין הפרלמנט כשהפנים לנהר. יש שני פסלי סוסים, והמדריך מחכה ליד זה שקרוב יותר לנהר. השיט מקורה ומחומם, עם מרפסת חיצונית ומשקה." },
     { id: "kovacs-kert", name: "Kovács-Kert Visegrád", he: "קובאץ'-קרט, ויסגרד", layer: "food", status: "nice", tags: ["indoor"], q: "Kovács-Kert Étterem Visegrád Fő utca 66", lat: 47.7850, lng: 18.9710,
       why: "מסעדה הונגרית ביתית בוויסגרד, פתוחה כל יום 12:00–21:00, כולל ימי שני. חלופה נוחה לרנסאנס." },
     { id: "renaissance", name: "Renaissance Restaurant Visegrád", he: "מסעדת רנסאנס, ויסגרד", layer: "maybe", status: "maybe", tags: ["indoor"], q: "Reneszánsz Étterem Visegrád Fő utca 11", lat: 47.7905, lng: 18.9645,
@@ -241,6 +245,16 @@ window.TRIP = {
 
   // התוכנית היומית נמצאת בקובץ data/plan.js (נערכת גם מלוח התכנון באפליקציה)
   days: [],
+
+  // רשימת אריזה (מסומנת בכל מכשיר בנפרד)
+  packing: [
+    { g: "מסמכים וכסף", items: ["דרכונים", "רישיונות נהיגה ישראליים ובינלאומיים", "כרטיס אשראי על שם שלומי (לפיקדון של הרכב)", "יורו במזומן לשיט (50€)", "שובר פליי מאני (איסוף בנתב\"ג)", "ביטוח נסיעות"] },
+    { g: "מרחצאות ובריכה", items: ["בגד ים לשניכם", "כפכפים", "מגבת קטנה (לרודאש)", "נרתיק עמיד למים לטלפון"] },
+    { g: "בגדים", items: ["מעיל חם ועמיד לגשם", "כובע, כפפות וצעיף", "נעלי הליכה נוחות", "בגדים מכובדים לערבים (High Note, גורדון רמזי)", "שכבות: סוודר או פליז"] },
+    { g: "חשמל וטלפון", items: ["מטענים", "סוללה ניידת", "כבל לרכב (אם יש)", "אוזניות למדריך הקולי"] },
+    { g: "שונות", items: ["מטרייה קטנה", "תרופות קבועות", "משקפי שמש", "שקית למזכרות"] }
+  ],
+  budget: { estHuf: 460000, maxEur: 2000 },
 
   // 12 המקומות מהמפה של Budapest Spotz
   top12: [
@@ -279,8 +293,8 @@ window.TRIP = {
       note: "הוזמן! 2 סועדים, ביום שלישי 10.11 ב-21:00 (שעון בודפשט). הכתובת: Október 6. u. 17, ליד הבזיליקה, כ-7 דק' מהמלון. אם לא מגיעים, מבטלים מראש דרך Reserve with Google במייל האישור." },
     { id: "car-rental", title: "✅ רכב שכור ל-9.11 (Fox Autorent)", when: "9.11, 08:30–17:00", urgency: "high", done: true,
       note: "✅ הוזמן דרך CarFlexi, הספק Fox Autorent (ציון 9.83/10). Suzuki SX4 S-Cross או דומה, אוטומטי, עם Premium Excess Protection. איסוף: יום שני 9.11 ב-08:30. החזרה: באותו יום עד 17:00. שניהם ב-Budapest City Office, Hársfa utca 53-55, 1074 Budapest. טלפון: +36 1 382 9000. שולם מראש 121.21 ₪, ובדלפק משלמים עוד 42.25€. האישור המלא במייל של שלומי." },
-    { id: "sunset-cruise", title: "שיט שקיעה על הדנובה", when: "8.11, 15:45", urgency: "high",
-      note: "שיט שקיעה עם שתייה, בלי ארוחה, 15:45–17:15. הספק עוד לא נבחר: אפשרות אחת היא שיט יין פרטי של Taste Hungary (599€ לזוג, 4 יינות, סירה מקורה ומחוממת), אפשרות שנייה שיט פרוסקו ללא הגבלה (כ-25–30€ לאדם, 75 דק', מוויגאדו), ואפשרות שלישית שיט בעברית דרך בר." },
+    { id: "sunset-cruise", title: "✅ שיט לילה בעברית (בודפשט עם בר)", when: "10.11, 18:45", urgency: "high", done: true,
+      note: "✅ נרשמתם: יום שלישי 10.11 ב-18:45, 2 משתתפים, 25€ לאדם. התשלום במזומן בתחילת השיט, ביורו או בפורינט (50€ לשניכם). נקודת המפגש (לא ליד הרציף!): פסל הסוס של אנדראשי, Kossuth Lajos tér, משמאל לפרלמנט, ליד הפסל שקרוב יותר לנהר. מיקום: https://maps.app.goo.gl/Fwxjy3nKg1WBEzTF6. מגיעים כמה דקות לפני, כי השיט יוצא בדיוק בזמן. מקורה עם מיזוג, ויש גם מרפסת חיצונית." },
   ],
 
   docs: [

@@ -38,7 +38,10 @@ const itemKey = (d, it) => d.date + "|" + it.text;
 let notes = Object.assign({}, shared.notes || {}, planDirty ? store.get("notes", {}) : {});        // key -> text ("" = נמחק)
 if (!planDirty) { store.set("notes", notes); store.set("status", statusOv); store.set("booked", bookDone); }
 let hiddenInbox = store.get("hiddenInbox", {});
-const noteHtml = k => notes[k] ? `<div class="mynote">📝 ${esc(notes[k])}</div>` : "";
+const noteBox = t => { const x = String(t); if (x.length <= 150) return `<div class="mynote">📝 ${esc(x)}</div>`; const cut = x.slice(0, 110).replace(/\s+\S*$/, "");
+  return `<details class="mynote"><summary>📝 ${esc(cut)}… <span class="more">עוד</span></summary>${esc(x)}</details>`; };
+const noteHtml = k => notes[k] ? noteBox(notes[k]) : "";
+const myNoteKeys = () => Object.keys(notes).filter(k => notes[k] && notes[k] !== ((shared.notes || {})[k] || ""));
 const sayOf = p => p.say || (p.layer === "food" || (p.layer === "maybe" && /restaurant|étterem|bistro|café|cafe|bar/i.test(p.name)) ? T.defaultSay : null);
 function openSay(say, title) {
   openSheet(`<h2>🗣 מה לומר${title ? " · " + esc(title) : ""}</h2>
@@ -247,21 +250,29 @@ async function renderToday() {
   const anchors = d.items.filter(i => i.anchor);
   const pending = d.items.filter(i => i.book && !bookDone[i.book]).map(i => T.bookings.find(b => b.id === i.book)).filter(Boolean);
   const uniq = [...new Map(pending.map(b => [b.id, b])).values()];
+  const todayStr = budDate(), isToday = d.date === todayStr, nowM = budMin();
+  const daysTo = Math.round((new Date(T.days[0].date + "T12:00:00") - new Date(todayStr + "T12:00:00")) / 864e5);
+  const evening = isToday && nowM >= 18 * 60;
   el.innerHTML = `
-    <div class="brief">
+    <section class="hero">
+      <div class="hero-top"><span>יום ${day + 1} · ${esc(dayLabel(d))}${daysTo > 0 && day === 0 ? ` · ✈️ עוד ${daysTo} ${daysTo === 1 ? "יום" : "ימים"}` : ""}</span>
+        <span class="hero-wx">${w ? `${WXI(w.code)} ${w.min}°–${w.max}° · ☔ ${w.rain}%${w.sunset ? ` · 🌇 ${w.sunset}` : ""}` : "🌤 התחזית בקרוב"}</span></div>
       <h2>${esc(d.title)}</h2>
-      <p>${esc(d.summary)}</p>
-      <div class="wxline">
-        ${w ? `<span class="pill">${WXI(w.code)} ${w.min}°–${w.max}°</span><span class="pill ${w.rain>=50?"warn":""}">☔ ${w.rain}%</span><span class="pill ${w.wind>=35?"warn":""}">💨 ${w.wind} קמ"ש</span>${w.sunset?`<span class="pill">🌇 ${w.sunset}</span>`:""}` : `<span class="pill">תחזית עוד לא זמינה</span>`}
+      <p class="hero-sum">${esc(d.summary)}</p>
+      <div class="hero-chips">
+        <button class="hchip main" data-hero="brief">${evening ? "🌙 סיכום היום" : "☀️ תדריך היום"}</button>
+        ${anchors.length ? `<button class="hchip" data-hero="anchors">⏰ ${anchors.length} עוגנים</button>` : ""}
+        ${uniq.length ? `<button class="hchip todo" data-hero="todo">🎫 ${uniq.length} להזמין</button>` : ""}
+        <button class="hchip" data-hero="tips">💡 טיפים</button>
       </div>
-      <div class="advice">${esc(wxAdvice(w, d))}</div>
-      ${anchors.length ? `<div class="row">${anchors.map(a => `<span class="pill anchor">⏰ ${a.time} ${esc(a.text)}</span>`).join("")}</div>` : ""}
-      ${uniq.length ? `<div class="row">${uniq.map(b => `<button class="pill book" data-bk="${b.id}">🎫 להזמין: ${esc(b.title)}</button>`).join("")}</div>` : ""}
-    </div>
+    </section>
+    <div id="nowBar"></div>
     <div class="daystats" id="dayStats">מחשב זמני הליכה…</div>
-    <ol class="timeline" id="tl"></ol>
-    <h3 class="sec-title">טיפים להיום</h3>
-    <div class="tips">${pickTips(d).map(t => `<div class="tip"><b>${esc(t.t)}</b>${esc(t.d)}</div>`).join("")}</div>`;
+    <ol class="timeline" id="tl"></ol>`;
+  el.querySelectorAll("[data-hero]").forEach(b => b.onclick = () => heroSheet(b.dataset.hero, d, w, evening, anchors, uniq));
+  const numT = d.items.map(it => /^\d{1,2}:\d{2}$/.test(it.time || "") ? tmin(it.time) : null);
+  let curIdx = -1, nextIdx = -1;
+  if (isToday) { numT.forEach((m, i) => { if (m == null) return; if (m <= nowM) curIdx = i; else if (nextIdx < 0) nextIdx = i; }); }
   const tl = $("#tl");
   let prev = null, tot = { walkM: 0, walkS: 0, transS: 0 }, longest = 0;
   const rows = [];
@@ -279,7 +290,8 @@ async function renderToday() {
     const c = p && info(p.id);
     const rk = esc(itemKey(d, it));
     const nk = "it:" + itemKey(d, it);
-    rows.push(legHtml + `<li class="ti-item ${isRem ? "removed" : ""} ${it.mine ? "mine" : ""}">
+    const ix = d.items.indexOf(it);
+    rows.push(legHtml + `<li class="ti-item ${isRem ? "removed" : ""} ${it.mine ? "mine" : ""} ${ix === curIdx ? "is-now" : ""} ${ix === nextIdx ? "is-next" : ""}" data-ix="${ix}">
       <div class="ti-box ${it.anchor ? "anchor" : ""}">
         <button class="ti-main" ${p ? `data-place="${p.id}"` : "disabled"}>
           <span class="ti-head"><span class="ti-t">${esc(it.time)}</span>${p ? `<span class="dot" style="background:${colorOf(p)}"></span><span class="sb">${esc(p.he)}${c && c.rating ? ` · ★ ${c.rating}` : ""}</span>` : ""}
@@ -287,11 +299,12 @@ async function renderToday() {
           <span class="nm">${esc(it.text)}</span>
           <span class="ti-photo">${c && c.photo ? `<img src="${esc(c.photo)}" alt="" loading="lazy">` : ""}</span>
         </button>
-        ${isRem ? `<div class="rm-note">יוסר בעדכון הבא · ↺ לביטול</div>` : ""}${notes[nk] ? `<div class="mynote">📝 ${esc(notes[nk])}</div>` : ""}
+        ${isRem ? `<div class="rm-note">יוסר בעדכון הבא · ↺ לביטול</div>` : ""}${notes[nk] ? noteBox(notes[nk]) : ""}
         <div class="ti-acts">
           ${it.book && T.bookings.find(b => b.id === it.book) ? `<button class="act ${bookDone[it.book] ? "bk-ok" : "bk-todo"}" data-bk="${it.book}">🎫 ${bookDone[it.book] ? "ההזמנה" : "להזמין"}</button>` : ""}
           ${p && sayOf(p) ? `<button class="act" data-sayp="${p.id}">🗣 מה לומר</button>` : ""}
           ${it.more ? `<button class="act" data-more="${d.items.indexOf(it)}">${esc(it.more.label)}</button>` : ""}
+          ${p && p.layer !== "hotel" ? `<a class="act" href="${gmapsDir(p, hav(HOTEL, loc(p)) > 2500 ? "transit" : "walking")}" target="_blank" rel="noopener">↗ ניווט</a>` : ""}
           <button class="act" data-note="${rk}">📝 הערה</button>
           ${it.mine ? `<button class="act" data-idea="${esc(it.place.slice(5))}">✕ מחיקה</button>`
             : `<button class="act" data-rm="${rk}" data-time="${esc(it.time)}">${isRem ? "↺ ביטול" : "✕ להסיר"}</button>`}
@@ -313,6 +326,8 @@ async function renderToday() {
   const busy = tot.walkM > 12000;
   $("#dayStats").innerHTML = `🚶 <b>${fmtDist(tot.walkM)}</b> הליכה (${fmtMin(tot.walkS)})${tot.transS ? ` · 🚇 <b>${fmtMin(tot.transS)}</b> בתחבורה` : ""}${busy ? ` <span class="pill warn">יום ארוך ברגליים</span>` : ""} <button class="btn ghost" id="dayMap">על המפה</button>`;
   $("#dayMap").onclick = () => { mapLayer = "day"; go("map"); };
+  lastStats = { day, walkM: tot.walkM, walkS: tot.walkS };
+  if (isToday) { drawNowBar(d, curIdx, nextIdx); if (!renderToday.scrolled) { renderToday.scrolled = true; const li = tl.querySelector(".is-now, .is-next"); if (li) setTimeout(() => li.scrollIntoView({ behavior: "smooth", block: "center" }), 300); } }
   // השלמת תמונות ודירוגים ברקע
   for (const it of d.items) { const p = it.place && P[it.place]; if (p && !info(p.id)) { resolve(p).then(() => { if (view === "today" && T.days[day] === d) patchThumbs(); }); } }
 }
@@ -449,15 +464,17 @@ function getMe() {
 }
 
 // ---------- רשימת מקומות ----------
-let placeFilter = "all";
+let placeFilter = "all", placeQ = "";
 function renderPlaces() {
   const el = $("#view-places");
   const F = [["all","הכל"],["sights",T.layers.sights.name],["food",T.layers.food.name],["shop",T.layers.shop.name],["must","חובה"],["maybe","אולי"],["visited","ביקרנו"]];
   const match = p => p.layer !== "hotel" && (placeFilter === "all" ? statusOf(p) !== "skip" : ["must","maybe","visited"].includes(placeFilter) ? statusOf(p) === placeFilter : layerOf(p) === placeFilter);
-  const list = T.places.filter(match).sort((a, b) => hav(HOTEL, a) - hav(HOTEL, b));
-  el.innerHTML = `<div class="filters">${F.map(([k, n]) => `<button data-f="${k}" class="${k === placeFilter ? "on" : ""}">${esc(n)}</button>`).join("")}</div>
+  const ql = placeQ.trim().toLowerCase();
+  const list = T.places.filter(p => ql ? p.layer !== "hotel" && (p.he + " " + p.name + " " + (p.why || "")).toLowerCase().includes(ql) : match(p)).sort((a, b) => hav(HOTEL, a) - hav(HOTEL, b));
+  el.innerHTML = `<input id="placeQ" class="search" type="search" placeholder="🔎 חיפוש מקום לפי שם…" value="${esc(placeQ)}"><div class="filters">${F.map(([k, n]) => `<button data-f="${k}" class="${k === placeFilter ? "on" : ""}">${esc(n)}</button>`).join("")}</div>
     <div class="plist">${list.map(p => card(p, hav(HOTEL, loc(p)), "מהמלון")).join("") || `<p class="muted">אין כאן עדיין מקומות.</p>`}</div>`;
   el.querySelectorAll("[data-f]").forEach(b => b.onclick = () => { placeFilter = b.dataset.f; renderPlaces(); });
+  const pq = $("#placeQ"); pq.oninput = () => { placeQ = pq.value; renderPlaces(); const n = $("#placeQ"); n.focus(); n.setSelectionRange(n.value.length, n.value.length); };
 }
 function card(p, dist, from) {
   const c = info(p.id), st = statusOf(p);
@@ -472,8 +489,16 @@ function renderDocs() {
   const el = $("#view-docs");
   const shopping = store.get("shopping", "");
   const remList = Object.entries(removed), skipped = T.places.filter(p => !p.mine && statusOv[p.id] === "skip");
-  const nChanges = remList.length + skipped.length + ideas.length + Object.keys(notes).filter(k => notes[k]).length;
+  const nChanges = remList.length + skipped.length + ideas.length + myNoteKeys().length;
   el.innerHTML = `
+    <div class="tools">
+      <button class="tool" data-tool="prep"><span>✈️</span>הכנה לטיסה</button>
+      <button class="tool" data-tool="ics"><span>📅</span>ללוח השנה</button>
+      <button class="tool" data-tool="exp"><span>💰</span>הוצאות</button>
+      <button class="tool" data-tool="pack"><span>🎒</span>אריזה</button>
+      <button class="tool" data-tool="vault"><span>🔒</span>מסמכים פרטיים</button>
+      <button class="tool" data-tool="done"><span>🗺</span>מה שעשינו</button>
+    </div>
     <div class="doc syncbox"><div class="row nowrap" style="justify-content:space-between"><span><b>🔄 סנכרון:</b> ${ghToken ? "מחובר" : "לא מחובר במכשיר הזה"}${planDirty ? " · יש שינויים שממתינים" : ""}</span><button class="btn ghost sm" id="syncSet">${ghToken ? "הגדרות" : "חיבור"}</button></div></div>
     <div class="row" style="margin-top:8px"><button class="btn" id="openBoard2">🗂 לוח התכנון (גרירה בין ימים)</button></div>
     <h3 class="sec-title">📝 השינויים שלי לעדכון הבא${nChanges ? ` <span class="pill book">${nChanges}</span>` : ""}</h3>
@@ -481,7 +506,7 @@ function renderDocs() {
       ${nChanges ? "" : `<div>עוד אין שינויים. בתוכנית היומית לוחצים ✕ ליד מה שלא רוצים, ובכפתור "➕ הוספת המלצה" מוסיפים מקום חדש.</div>`}
       ${remList.map(([k, r]) => `<div class="chg"><span>✕ ${esc(r.time)} ${esc(r.text)}</span><button class="btn ghost sm" data-unrm="${esc(k)}">ביטול</button></div>`).join("")}
       ${skipped.map(p => `<div class="chg"><span>✕ ויתרנו: ${esc(p.he)}</span><button class="btn ghost sm" data-unskip="${p.id}">ביטול</button></div>`).join("")}
-      ${Object.keys(notes).filter(k => notes[k]).length ? `<div class="chg"><span>📝 ${Object.keys(notes).filter(k => notes[k]).length} הערות שכתבת (יישלחו יחד עם השינויים)</span></div>` : ""}
+      ${myNoteKeys().length ? `<div class="chg"><span>📝 ${myNoteKeys().length} הערות שכתבת (יישלחו יחד עם השינויים)</span></div>` : ""}
       ${ideas.map(x => `<div class="chg"><span>➕ ${esc(x.place ? x.place.name : (x.text || "צילום מסך"))}${x.day != null ? ` · יום ${x.day + 1}` : ""}${x.note ? ` · ${esc(x.note)}` : ""}${x.imgs ? ` · 📷 ${x.imgs}` : ""}</span><button class="btn ghost sm" data-delidea="${x.id}">מחיקה</button></div>`).join("")}
       <div class="row" style="margin-top:10px"><button class="btn acc" id="sendChg" ${nChanges ? "" : "disabled"}>📤 שליחה ל-Claude</button><button class="btn ghost" id="addIdea">➕ הוספת המלצה</button></div>
       <div class="muted small" style="margin-top:6px">ב"שליחה" נפתח חלון שיתוף. בוחרים בו את Claude (או מעתיקים), וכל השינויים עוברים יחד עם צילומי המסך.</div>
@@ -491,7 +516,7 @@ function renderDocs() {
       ${(T.top12 || []).length ? `<div class="doc"><h3>📍 12 המקומות שאסור לפספס</h3><div class="muted small">מהמפה של Budapest Spotz. ליד כל מקום רשום באיזה יום הוא בתכנית.</div>
         <div class="list" style="margin-top:8px">${T.top12.map((x, i) => { const di = T.days.findIndex(d => d.items.some(it => it.place === x.id || (x.also || []).includes(it.place))); const p = P[x.id];
           return `<button class="ti-card" ${p ? `data-place="${p.id}"` : "disabled"}><b>${i + 1}.</b> ${esc(x.he)} <span class="pill ${di >= 0 ? "ok" : (x.note ? "warn" : "")}">${di >= 0 ? "יום " + (di + 1) + " · " + dayLabel(T.days[di]) : (x.note || "לא בתכנית")}</span></button>`; }).join("")}</div></div>` : ""}
-      <div class="doc"><h3>🔒 מסמכים אישיים</h3><div>צילומי דרכונים, אישורי הזמנה ומספרי הזמנה יישמרו באזור פרטי שנוסיף בגרסה הבאה, מוגן בסיסמה ומסונכרן ביניכם.</div></div>
+      <div class="doc"><h3>🔒 מסמכים פרטיים</h3><div>דרכונים, אישורי הזמנה ומספרי הזמנה, מוצפנים בסיסמה ושמורים רק בטלפון הזה.</div><div class="row" style="margin-top:8px"><button class="btn" id="vaultBtn2">פתיחה</button></div></div>
     </div>
     <div class="doc"><div>🎫 כל ההזמנות, הביטולים וההערות נמצאים עכשיו ב"תכנית החופשה", בכפתור 🎫 ליד כל פריט.</div></div>
     <details class="inbox" ${store.get("inboxOpen", false) ? "open" : ""}><summary class="sec-title">המלצות מהקבוצה <span class="muted small">(${(T.inbox||[]).filter(x => !hiddenInbox[x.title]).length})</span></summary>
@@ -511,7 +536,7 @@ function renderDocs() {
     <div class="doc"><div>מוריד קובץ עם כל המקומות לפי שכבות. מייבאים אותו פעם אחת ל-Google My Maps, ואז כל השכבות מופיעות גם באפליקציית גוגל מפס, תחת "שמורים" ← "מפות".</div>
       <div class="row" style="margin-top:8px"><button class="btn" id="kmlAll">ייצוא כל המקומות</button><button class="btn ghost" id="kmlVisited">ייצוא "ביקרנו"</button><a class="btn ghost" href="https://www.google.com/maps/d/" target="_blank" rel="noopener">פתח את My Maps</a></div></div>
     <div class="row" style="margin-top:14px"><button class="btn ghost" id="diag2">🔧 בדיקת חיבור לגוגל</button></div>
-    <p class="muted small" style="margin:18px 0">גרסה 21 · נתונים מגוגל מתעדכנים אוטומטית · הסימונים נשמרים במכשיר הזה</p>`;
+    <p class="muted small" style="margin:18px 0">גרסה 30 · נתונים מגוגל מתעדכנים אוטומטית · הסימונים נשמרים במכשיר הזה</p>`;
   el.querySelectorAll("[data-unrm]").forEach(b => b.onclick = () => { delete removed[b.dataset.unrm]; store.set("removed", removed); renderDocs(); });
   el.querySelectorAll("[data-unskip]").forEach(b => b.onclick = () => { delete statusOv[b.dataset.unskip]; store.set("status", statusOv); renderDocs(); });
   el.querySelectorAll("[data-delidea]").forEach(b => b.onclick = () => deleteIdea(b.dataset.delidea));
@@ -523,6 +548,8 @@ function renderDocs() {
   $("#diag2").onclick = diagnose; $("#sendChg").onclick = sendChanges; $("#addIdea").onclick = () => openAdd(null);
   $("#shopping").oninput = e => store.set("shopping", e.target.value);
   $("#gmList").onclick = openGmList;
+  $("#vaultBtn2").onclick = openVault;
+  el.querySelectorAll("[data-tool]").forEach(b => b.onclick = () => ({ prep: prepOffline, ics: exportIcs, exp: openExpenses, pack: openPacking, vault: openVault, done: () => { mapLayer = "visited"; go("map"); toast("כל המקומות שסימנתם \"ביקרנו\". מכאן אפשר גם לייצא ל-My Maps") } })[b.dataset.tool]());
   $("#kmlAll").onclick = () => kml(T.places.filter(p => statusOf(p) !== "skip"), "budapest-all");
   $("#kmlVisited").onclick = () => { const v = T.places.filter(p => statusOf(p) === "visited"); if (!v.length) return toast("עוד לא סימנתם מקומות כ\"ביקרנו\""); kml(v, "budapest-visited"); };
 }
@@ -559,11 +586,12 @@ const QUICK = [
   ["hungry", "🍽 רעבים"], ["drink", "🍷 משהו לשתות"], ["romantic", "❤️ משהו רומנטי"], ["rain", "☔ יורד גשם"],
   ["tired", "😮‍💨 עייפים"], ["hour", "⏳ שעה פנויה"], ["home", "🏨 הכי מהר למלון"]
 ];
-QUICK.unshift(["add", "➕ הוספת המלצה"]);
+QUICK.unshift(["add", "➕ הוספת המלצה"]); QUICK.unshift(["exp", "💰 הוצאה"]);
 $("#quick").innerHTML = QUICK.map(([k, n]) => `<button data-q="${k}">${n}</button>`).join("");
 $("#quick").addEventListener("click", e => { const b = e.target.closest("[data-q]"); if (b) quick(b.dataset.q); });
 async function quick(k) {
   if (k === "add") return openAdd(null);
+  if (k === "exp") return openExpense();
   openSheet(`<h2>${QUICK.find(q => q[0] === k)[1]}</h2><p class="muted">מאתר אתכם…</p>`);
   const here = await getMe(); const origin = here || loc(HOTEL);
   const note = here ? "" : `<p class="muted small">לא קיבלתי מיקום, אז המרחקים מחושבים מהמלון. אפשר לאשר מיקום בהגדרות הדפדפן.</p>`;
@@ -687,7 +715,7 @@ function changesText() {
     if (x.note) L.push(`  הערה: ${x.note}`);
     if (x.day != null) L.push(`  לשבץ ביום ${x.day + 1}`);
     if (x.imgs) L.push(`  מצורפים ${x.imgs} צילומי מסך`); }); }
-  const nk = Object.keys(notes).filter(k => notes[k]);
+  const nk = myNoteKeys();
   if (nk.length) { L.push("", "ההערות שלי:"); nk.forEach(k => { const [t, ...r] = k.split(":"); const id = r.join(":");
     const label = t === "pl" ? (P[id] ? P[id].he : id) : t === "bk" ? ((T.bookings.find(b => b.id === id) || {}).title || id) : t === "it" ? id.replace("|", " · ") : id;
     L.push(`- ${label}: ${notes[k]}`); }); }
@@ -718,6 +746,7 @@ function applyShared(pl) {
   notes = Object.assign({}, pl.notes || {}, planDirty ? store.get("notes", {}) : {}); store.set("notes", notes);
   statusOv = Object.assign({}, pl.status || {}, planDirty ? store.get("status", {}) : {}); store.set("status", statusOv);
   bookDone = Object.assign({}, pl.booked || {}, planDirty ? store.get("booked", {}) : {}); store.set("booked", bookDone);
+  expenses = mergeExp(pl.expenses, expenses); store.set("exp", expenses);
 }
 let syncTimer = null, syncing = false;
 function markShared(daysChanged) {
@@ -735,7 +764,8 @@ async function syncNow(silent) {
     const merged = {
       rev: (remote.rev || 0) + 1, updated: new Date().toISOString(), by: navigator.userAgent.includes("iPad") ? "טאבלט" : "טלפון",
       days: (lp.daysDirty && (remote.rev || 0) <= (lp.baseRev ?? shared.rev ?? 0)) ? shared.days : remote.days,
-      notes: Object.assign({}, remote.notes || {}, notes), status: Object.assign({}, remote.status || {}, statusOv), booked: Object.assign({}, remote.booked || {}, bookDone)
+      notes: Object.assign({}, remote.notes || {}, notes), status: Object.assign({}, remote.status || {}, statusOv), booked: Object.assign({}, remote.booked || {}, bookDone),
+      expenses: mergeExp(remote.expenses, expenses)
     };
     const body = { message: "עדכון תוכנית מהאפליקציה (rev " + merged.rev + ")", content: b64e("// התוכנית היומית והמצב המשותף. האפליקציה כותבת לקובץ הזה ישירות כשלוחצים \"שמירה וסנכרון\".\nwindow.PLAN = " + JSON.stringify(merged, null, 1) + ";\n"), sha, branch: "main" };
     const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${PLAN_PATH}`, { method: "PUT", headers: { Accept: "application/vnd.github+json", Authorization: "Bearer " + ghToken, "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -834,6 +864,265 @@ function editBoardItem(di, ii) {
 }
 function closeBoard() { const bd = $("#board"); if (bd) bd.hidden = true; document.body.classList.remove("board-open"); }
 
+// ---------- זמן בבודפשט ----------
+function budDate() { return new Date().toLocaleDateString("en-CA", { timeZone: T.tz }); }
+function budMin() { const p = new Intl.DateTimeFormat("en-GB", { timeZone: T.tz, hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(new Date()); const g = t => +p.find(x => x.type === t).value; return (g("hour") % 24) * 60 + g("minute"); }
+const tripLive = () => { const t = budDate(); return t >= T.days[0].date && t <= T.days[T.days.length - 1].date; };
+let lastStats = null;
+
+// ---------- כרטיס היום: תדריך, עוגנים, להזמין, טיפים ----------
+function bringFor(d, w) {
+  const ids = new Set(d.items.map(i => i.place).filter(Boolean)), books = new Set(d.items.map(i => i.book).filter(Boolean)), txt = d.items.map(i => i.text).join(" ");
+  const b = [];
+  if (d.items.some(i => i.kind === "flight")) b.push("🛂 דרכונים");
+  if (books.has("car-rental")) b.push("🪪 רישיונות ודרכונים", "💳 כרטיס אשראי לפיקדון");
+  if (ids.has("rudas") || ids.has("hotel-spa") || /בריכ/.test(txt)) b.push("🩱 בגד ים וכפכפים");
+  if (ids.has("rudas")) b.push("🧺 מגבת ונרתיק עמיד למים");
+  if (books.has("sunset-cruise")) b.push("💶 50€ במזומן לשיט");
+  if (books.has("highnote") || books.has("special-dinner")) b.push("👔 לבוש מכובד לערב");
+  if (w && w.rain >= 30) b.push("☂️ מטרייה");
+  if (w && w.max <= 6) b.push("🧤 כובע, כפפות וצעיף");
+  b.push("🔋 סוללה ניידת", "👟 נעליים נוחות");
+  return [...new Set(b)];
+}
+function heroSheet(kind, d, w, evening, anchors, uniq) {
+  if (kind === "anchors") return openSheet(`<h2>⏰ העוגנים של היום</h2><div class="list">${anchors.map(a => `<div class="ti-card"><b class="ti-t">${esc(a.time)}</b><span class="tx">${esc(a.text)}</span></div>`).join("")}</div>`);
+  if (kind === "todo") { openSheet(`<h2>🎫 עוד להזמין</h2><div class="list">${uniq.map(b => `<button class="ti-card" data-bk2="${b.id}"><span class="tx"><span class="nm">${esc(b.title)}</span><span class="sb">${esc(b.when)}</span></span></button>`).join("")}</div>`);
+    return $("#sheet").querySelectorAll("[data-bk2]").forEach(x => x.onclick = () => openBooking(x.dataset.bk2)); }
+  if (kind === "tips") return openSheet(`<h2>💡 טיפים להיום</h2><div class="tips">${pickTips(d).filter(Boolean).map(t => `<div class="tip"><b>${esc(t.t)}</b>${esc(t.d)}</div>`).join("")}</div>`);
+  const di = T.days.indexOf(d), next = T.days[di + 1];
+  const placesToday = [...new Set(d.items.map(i => i.place).filter(Boolean))].map(id => P[id]).filter(p => p && p.layer !== "hotel");
+  const visited = placesToday.filter(p => statusOf(p) === "visited").length;
+  const st = lastStats && lastStats.day === day ? lastStats : null;
+  const sum = evening ? `<div class="briefbox"><h3>🌙 היום שלכם</h3>
+      <div class="bigstats"><div><b>${st ? fmtDist(st.walkM) : "–"}</b><span>הליכה לפי התכנית</span></div><div><b>${visited}/${placesToday.length}</b><span>מקומות שסימנתם "ביקרנו"</span></div></div>
+      ${next ? `<p><b>מחר: ${esc(next.title)}.</b> ${esc((next.items.find(i => i.anchor) || next.items[0] || {}).time || "")} ${esc((next.items.find(i => i.anchor) || next.items[0] || {}).text || "")}</p>` : `<p>זה היה היום האחרון. טיסה טובה הביתה ❤️</p>`}
+      ${next ? `<p class="muted small">לא לשכוח למחר: ${bringFor(next, wxFor(next.date)).slice(0, 5).join(" · ")}</p>` : ""}</div>` : "";
+  openSheet(`<h2>${evening ? "🌙 סיכום היום" : "☀️ תדריך היום"}</h2>${sum}
+    <div class="briefbox"><h3>🌤 מזג האוויר</h3><p>${w ? `${WXI(w.code)} ${w.min}°–${w.max}°, סיכוי לגשם ${w.rain}%, רוח ${w.wind} קמ"ש${w.sunset ? `, שקיעה ב-${w.sunset}` : ""}.` : ""} ${esc(wxAdvice(w, d))}</p></div>
+    <div class="briefbox"><h3>🎒 לא לשכוח</h3><div class="row">${bringFor(d, w).map(x => `<span class="pill">${esc(x)}</span>`).join("")}</div></div>
+    ${anchors.length ? `<div class="briefbox"><h3>⏰ עוגנים</h3>${anchors.map(a => `<div><b>${esc(a.time)}</b> ${esc(a.text)}</div>`).join("")}</div>` : ""}
+    ${uniq.length ? `<div class="briefbox"><h3>🎫 עוד להזמין</h3>${uniq.map(b => `<div>${esc(b.title)}</div>`).join("")}</div>` : ""}`);
+}
+
+// ---------- מצב "עכשיו" ----------
+async function drawNowBar(d, cur, nxt) {
+  const box = $("#nowBar"); if (!box) return;
+  const it = nxt >= 0 ? d.items[nxt] : null;
+  if (!it) { box.innerHTML = cur >= 0 ? `<div class="nowbar"><span class="nb-k">עכשיו</span><span class="nb-t">${esc(d.items[cur].text)}</span></div>` : ""; return; }
+  const mins = tmin(it.time) - budMin(), p = it.place && P[it.place];
+  const inTxt = mins <= 0 ? "עכשיו" : mins < 60 ? `בעוד ${mins} דק'` : `בעוד ${Math.floor(mins / 60)}:${String(mins % 60).padStart(2, "0")} ש'`;
+  box.innerHTML = `<div class="nowbar"><span class="nb-k">⏭ הבא בתור · ${inTxt}</span><span class="nb-t"><b>${esc(it.time)}</b> ${esc(it.text)}</span>
+    <span class="nb-r"><span id="nbWalk"></span>${p ? `<a class="btn acc sm" href="${gmapsDir(p, hav(HOTEL, loc(p)) > 2500 ? "transit" : "walking")}" target="_blank" rel="noopener">↗ ניווט</a>` : ""}</span></div>`;
+  if (!p) return;
+  const from = me ? { id: "__me", lat: me.lat, lng: me.lng } : (cur >= 0 && d.items[cur].place ? P[d.items[cur].place] : null);
+  if (!from || from.id === p.id) return;
+  const A = from.id === "__me" ? from : loc(from), dist = hav(A, loc(p));
+  const w = $("#nbWalk"); if (w) w.textContent = (dist > 2200 ? "🚇 " : "🚶 ") + (dist > 2200 ? "~" + fmtMin(dist / 6) : fmtMin(dist * 1.3 / 1.25)) + (me ? " ממך" : "");
+}
+setInterval(() => { if (view === "today" && T.days[day] && T.days[day].date === budDate()) renderToday(); }, 120000);
+
+// ---------- המרה (פורינט / שקל / אירו) ----------
+let fx = store.get("fx", null);
+async function loadFx() {
+  if (fx && Date.now() - fx.t < 12 * 3600e3) return fx;
+  try { const j = await (await fetch("https://api.frankfurter.app/latest?from=EUR&to=HUF,ILS")).json(); if (j.rates && j.rates.HUF) { fx = { t: Date.now(), date: j.date, huf: j.rates.HUF, ils: j.rates.ILS }; store.set("fx", fx); } } catch {}
+  return fx || { t: 0, date: "", huf: 390, ils: 3.8, est: true };
+}
+const hufToIls = (h, r) => h / r.huf * r.ils, hufToEur = (h, r) => h / r.huf;
+const fmtN = (n, dgt = 0) => Number(n).toLocaleString("he-IL", { maximumFractionDigits: dgt });
+async function openFx() {
+  const r = await loadFx(); let cur = "HUF";
+  openSheet(`<h2>💱 המרה</h2>
+    <div class="fx"><div class="row nowrap"><input id="fxIn" type="number" inputmode="decimal" placeholder="סכום" class="fx-in">
+      <select id="fxCur"><option value="HUF">פורינט</option><option value="ILS">₪ שקל</option><option value="EUR">€ אירו</option></select></div>
+      <div class="row" id="fxQuick">${[1000, 2500, 5000, 10000, 20000].map(v => `<button class="pill" data-v="${v}">${fmtN(v)}</button>`).join("")}</div>
+      <div id="fxOut" class="fx-out"></div>
+      <div class="row"><button class="btn acc" id="fxExp">💰 לרשום כהוצאה</button></div>
+      <p class="muted small">שער ${r.est ? "משוער" : "מ-" + esc(r.date) + " (הבנק המרכזי האירופי)"}: 1€ = ${fmtN(r.huf, 1)} פורינט · 1 ₪ = ${fmtN(r.huf / r.ils, 1)} פורינט. בטיפ במסעדה מקובל 10%–15%, אם לא נוסף כבר לחשבון ("szervízdíj").</p></div>`);
+  const calc = () => { const v = parseFloat($("#fxIn").value) || 0; cur = $("#fxCur").value;
+    const huf = cur === "HUF" ? v : cur === "EUR" ? v * r.huf : v / r.ils * r.huf;
+    $("#fxOut").innerHTML = v ? `<div><b>${fmtN(huf)}</b> פורינט</div><div><b>${fmtN(hufToIls(huf, r), 1)}</b> ₪</div><div><b>${fmtN(hufToEur(huf, r), 1)}</b> €</div><div class="muted small">טיפ 10%: ${fmtN(huf * .1)} פורינט</div>` : `<div class="muted">מקלידים מחיר, למשל מהתפריט</div>`; };
+  $("#fxIn").oninput = calc; $("#fxCur").onchange = calc; calc(); setTimeout(() => $("#fxIn").focus(), 60);
+  $("#fxQuick").querySelectorAll("[data-v]").forEach(b => b.onclick = () => { $("#fxIn").value = b.dataset.v; $("#fxCur").value = "HUF"; calc(); });
+  $("#fxExp").onclick = () => openExpense({ amt: parseFloat($("#fxIn").value) || "", cur: $("#fxCur").value });
+}
+
+// ---------- הוצאות ----------
+let expenses = store.get("exp", null) || (shared.expenses || []);
+function mergeExp(a, b) { const m = new Map(); [...(a || []), ...(b || [])].forEach(x => { const o = m.get(x.id); if (!o || x.del || (!o.del && (x.u || 0) > (o.u || 0))) m.set(x.id, x); }); return [...m.values()]; }
+const EXPCAT = { food: "🍽 אוכל", drink: "🍷 שתייה", move: "🚕 תחבורה", fun: "🎟 כניסות", shop: "🛍 קניות", spa: "💆 פינוק", other: "• אחר" };
+function saveExp() { store.set("exp", expenses); markShared(); }
+async function expHuf(x) { const r = await loadFx(); return x.cur === "HUF" ? x.amt : x.cur === "EUR" ? x.amt * r.huf : x.amt / r.ils * r.huf; }
+function openExpense(pre = {}) {
+  openSheet(`<h2>💰 הוצאה חדשה</h2><div class="form">
+    <div class="row nowrap"><input id="exA" type="number" inputmode="decimal" placeholder="סכום" class="fx-in" value="${esc(pre.amt ?? "")}">
+      <select id="exC"><option value="HUF">פורינט</option><option value="EUR">€</option><option value="ILS">₪</option></select></div>
+    <label for="exW">על מה</label><input id="exW" type="text" placeholder="למשל: קירטוש, מונית, כרטיסים" value="${esc(pre.what || "")}">
+    <div class="row" id="exCat">${Object.entries(EXPCAT).map(([k, v], i) => `<button class="pill ${i === 0 ? "on" : ""}" data-c="${k}" type="button">${v}</button>`).join("")}</div>
+    <div class="row"><label class="pill"><input type="checkbox" id="exCash"> מזומן</label></div>
+    <button class="btn acc" id="exSave" type="button">שמירה</button></div>`);
+  if (pre.cur) $("#exC").value = pre.cur;
+  let cat = "food"; $("#exCat").querySelectorAll("[data-c]").forEach(b => b.onclick = () => { cat = b.dataset.c; $("#exCat").querySelectorAll("[data-c]").forEach(o => o.classList.toggle("on", o === b)); });
+  setTimeout(() => $("#exA").focus(), 60);
+  $("#exSave").onclick = () => { const amt = parseFloat($("#exA").value); if (!amt) return toast("כתוב סכום");
+    expenses.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), u: Date.now(), date: budDate(), amt, cur: $("#exC").value, what: $("#exW").value.trim(), cat, cash: $("#exCash").checked || undefined });
+    saveExp(); closeSheet(); toast("נרשם ✓"); };
+}
+async function openExpenses() {
+  const r = await loadFx(), live = expenses.filter(x => !x.del).sort((a, b) => (b.u || 0) - (a.u || 0));
+  const byDay = {}; for (const x of live) (byDay[x.date] ||= []).push(x);
+  let total = 0; const dayTot = {};
+  for (const x of live) { const h = await expHuf(x); total += h; dayTot[x.date] = (dayTot[x.date] || 0) + h; }
+  const est = T.budget ? T.budget.estHuf : 0, maxH = T.budget ? T.budget.maxEur * r.huf : 0, pct = maxH ? Math.min(100, total / maxH * 100) : 0;
+  openSheet(`<h2>💰 ההוצאות שלנו</h2>
+    <div class="bigstats"><div><b>${fmtN(total)}</b><span>פורינט עד עכשיו</span></div><div><b>${fmtN(hufToIls(total, r))} ₪</b><span>${fmtN(hufToEur(total, r))}€</span></div></div>
+    ${maxH ? `<div class="meter"><span style="width:${pct}%"></span></div><p class="muted small">ההערכה שלנו לטיול: כ-${fmtN(est)} פורינט (בלי מלון, טיסות וקניות). התקרה שהגדרתם: ${fmtN(T.budget.maxEur)}€.</p>` : ""}
+    <div class="row"><button class="btn acc" id="exNew">➕ הוצאה חדשה</button><button class="btn ghost" id="exSiri">🎙 הוספה מסירי</button></div>
+    ${Object.keys(byDay).sort().reverse().map(dt => `<h3 class="sec-title">${esc(dayLabel({ date: dt }))} · ${fmtN(dayTot[dt])} פורינט</h3><div class="list">${byDay[dt].map(x => `<div class="chg"><span>${EXPCAT[x.cat] ? EXPCAT[x.cat].split(" ")[0] : "•"} ${esc(x.what || "")} · <b>${fmtN(x.amt)} ${x.cur === "HUF" ? "פורינט" : x.cur === "EUR" ? "€" : "₪"}</b>${x.cash ? " · מזומן" : ""}</span><button class="btn ghost sm" data-exdel="${x.id}">מחיקה</button></div>`).join("")}</div>`).join("") || `<p class="muted">עוד לא נרשמו הוצאות.</p>`}
+    <p class="muted small">ההוצאות מסונכרנות בין המכשירים שמחוברים לסנכרון.</p>`);
+  $("#exNew").onclick = () => openExpense();
+  $("#exSiri").onclick = siriHelp;
+  $("#sheet").querySelectorAll("[data-exdel]").forEach(b => b.onclick = () => { const x = expenses.find(e => e.id === b.dataset.exdel); if (x) { x.del = true; x.u = Date.now(); saveExp(); openExpenses(); } });
+}
+function siriHelp() {
+  const base = location.origin + location.pathname;
+  openSheet(`<h2>🎙 הוספת הוצאה מסירי</h2>
+    <p class="small">פעם אחת יוצרים קיצור דרך באפליקציית <b>קיצורים</b> (Shortcuts) באייפון, ואחר כך אומרים: <b>"היי סירי, הוצאה"</b>.</p>
+    <ol class="small"><li>קיצורים ← ➕ קיצור חדש ← שם: <b>הוצאה</b>.</li>
+      <li>פעולה: <b>בקש קלט</b> (Ask for Input), סוג: מספר, שאלה: "כמה פורינט?".</li>
+      <li>פעולה: <b>בקש קלט</b> נוסף, סוג: טקסט, שאלה: "על מה?".</li>
+      <li>פעולה: <b>פתח כתובות URL</b> (Open URLs), עם הכתובת הזו, ובמקום X ו-Y בוחרים את שני הקלטים:</li></ol>
+    <div class="copyable" dir="ltr" style="word-break:break-all">${esc(base)}?exp=X&w=Y</div>
+    <div class="row"><button class="btn" id="siriCopy">העתקת הכתובת</button></div>
+    <p class="muted small">האפליקציה תיפתח ותרשום את ההוצאה. אפשר להפעיל את הקיצור גם מהשעון כשהטלפון קרוב, או מכפתור על מסך הבית.</p>`);
+  $("#siriCopy").onclick = async () => { try { await navigator.clipboard.writeText(base + "?exp=X&w=Y"); toast("הועתק"); } catch { toast("סמן והעתק"); } };
+}
+(function expFromUrl() { const q = new URLSearchParams(location.search); const a = parseFloat(q.get("exp")); if (!a) return;
+  expenses.push({ id: Date.now().toString(36), u: Date.now(), date: budDate(), amt: a, cur: q.get("c") || "HUF", what: q.get("w") || "", cat: "other" });
+  store.set("exp", expenses); history.replaceState(null, "", location.pathname); setTimeout(() => { markShared(); toast(`נרשמה הוצאה: ${fmtN(a)} פורינט${q.get("w") ? " · " + q.get("w") : ""} ✓`, 4000); }, 800); })();
+
+// ---------- לוח שנה (.ics) עם התראות ----------
+function budToUtc(date, time) { const [y, m, d] = date.split("-").map(Number), [h, mi] = time.split(":").map(Number);
+  let g = Date.UTC(y, m - 1, d, h, mi); for (let k = 0; k < 2; k++) { const parts = new Intl.DateTimeFormat("en-GB", { timeZone: T.tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(new Date(g));
+    const v = t => +parts.find(x => x.type === t).value; const asLocal = Date.UTC(v("year"), v("month") - 1, v("day"), v("hour") % 24, v("minute")); g += Date.UTC(y, m - 1, d, h, mi) - asLocal; } return new Date(g); }
+const icsD = dt => dt.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+const icsEsc = s => String(s).replace(/\\/g, "\\\\").replace(/[,;]/g, m => "\\" + m).replace(/\n/g, "\\n");
+async function exportIcs() {
+  const ev = [];
+  T.days.forEach(d => d.items.forEach(it => { if (!(it.anchor || it.book) || !/^\d{1,2}:\d{2}$/.test(it.time || "")) return;
+    const st = budToUtc(d.date, it.time), en = new Date(st.getTime() + (it.kind === "flight" ? 3.5 : 1.5) * 3600e3), p = it.place && P[it.place];
+    const alarm = it.kind === "flight" ? 180 : 45, nk = notes["it:" + d.date + "|" + it.text];
+    ev.push(["BEGIN:VEVENT", "UID:" + d.date + "-" + it.time.replace(":", "") + "-" + (it.place || it.kind || "x") + "@trip-companion", "DTSTAMP:" + icsD(new Date()), "DTSTART:" + icsD(st), "DTEND:" + icsD(en),
+      "SUMMARY:" + icsEsc((it.text.replace(/^[⭐🚗🍷🌃🍹🚶 ]+/u, "")).slice(0, 70)), p ? "LOCATION:" + icsEsc(p.name) : "", "DESCRIPTION:" + icsEsc(it.text + (nk ? "\n\n" + nk : "")),
+      "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + icsEsc(it.text.slice(0, 60)), "TRIGGER:-PT" + alarm + "M", "END:VALARM", "END:VEVENT"].filter(Boolean).join("\r\n")); }));
+  const txt = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//trip-companion//HE", "CALSCALE:GREGORIAN", "X-WR-CALNAME:" + icsEsc(T.title), ...ev, "END:VCALENDAR"].join("\r\n");
+  const file = new File([txt], "budapest-2026.ics", { type: "text/calendar" });
+  openSheet(`<h2>📅 העוגנים ללוח השנה</h2><p class="small">${ev.length} אירועים: כל ההזמנות והעוגנים, כל אחד עם התראה 45 דק' לפני (בטיסות 3 שעות לפני). השעות לפי שעון בודפשט. לוח השנה באייפון מעביר את ההתראות גם לשעון.</p>
+    <div class="row"><button class="btn acc" id="icsGo">הורדה והוספה ללוח</button></div>
+    <p class="muted small">באייפון: אחרי ההורדה לוחצים על הקובץ ← "הוספת הכל". אם משנים את התכנית, אפשר להוריד שוב, והאירועים יתעדכנו.</p>`);
+  $("#icsGo").onclick = async () => { try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: "בודפשט 2026" }); return; } } catch (e) { if (e.name === "AbortError") return; }
+    const a = document.createElement("a"); a.href = URL.createObjectURL(file); a.download = file.name; document.body.appendChild(a); a.click(); a.remove(); };
+}
+
+// ---------- רשימת אריזה ----------
+let pack = store.get("pack", { done: {}, extra: [] });
+function openPacking() {
+  const groups = [...(T.packing || []), ...(pack.extra.length ? [{ g: "שהוספנו", items: pack.extra }] : [])];
+  const all = groups.flatMap(g => g.items), n = all.filter(x => pack.done[x]).length;
+  openSheet(`<h2>🎒 רשימת אריזה <span class="pill">${n}/${all.length}</span></h2>
+    ${groups.map(g => `<h3 class="sec-title">${esc(g.g)}</h3><div class="list">${g.items.map(x => `<label class="packrow ${pack.done[x] ? "ok" : ""}"><input type="checkbox" data-pk="${esc(x)}" ${pack.done[x] ? "checked" : ""}> ${esc(x)}</label>`).join("")}</div>`).join("")}
+    <div class="row nowrap" style="margin-top:12px"><input id="pkNew" type="text" placeholder="להוסיף פריט…"><button class="btn" id="pkAdd">הוספה</button></div>
+    <p class="muted small">הסימונים נשמרים בטלפון הזה, כך שכל אחד מכם יכול לסמן את מה שהוא ארז.</p>`);
+  $("#sheet").querySelectorAll("[data-pk]").forEach(c => c.onchange = () => { if (c.checked) pack.done[c.dataset.pk] = 1; else delete pack.done[c.dataset.pk]; store.set("pack", pack); c.parentElement.classList.toggle("ok", c.checked); });
+  $("#pkAdd").onclick = () => { const v = $("#pkNew").value.trim(); if (!v) return; pack.extra.push(v); store.set("pack", pack); openPacking(); };
+}
+
+// ---------- מסמכים פרטיים מוצפנים ----------
+const vdb = (() => { let p; const open = () => p ||= new Promise((res, rej) => { const r = indexedDB.open("tc-vault", 1); r.onupgradeneeded = () => r.result.createObjectStore("v"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+  const tx = async (mode, fn) => { const db = await open(); return new Promise((res, rej) => { const t = db.transaction("v", mode); const r = fn(t.objectStore("v")); t.oncomplete = () => res(r && r.result); t.onerror = () => rej(t.error); }); };
+  return { put: (k, v) => tx("readwrite", s => s.put(v, k)), get: k => tx("readonly", s => s.get(k)), del: k => tx("readwrite", s => s.delete(k)), keys: () => tx("readonly", s => s.getAllKeys()) }; })();
+let vaultKey = null;
+async function deriveKey(pw, salt) { const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 250000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]); }
+async function enc(buf) { const iv = crypto.getRandomValues(new Uint8Array(12)); return { iv, data: await crypto.subtle.encrypt({ name: "AES-GCM", iv }, vaultKey, buf) }; }
+const dec = o => crypto.subtle.decrypt({ name: "AES-GCM", iv: o.iv }, vaultKey, o.data);
+async function openVault() {
+  if (!window.crypto || !crypto.subtle) return toast("הדפדפן הזה לא תומך בהצפנה");
+  const meta = await vdb.get("__meta").catch(() => null);
+  if (!vaultKey) {
+    openSheet(`<h2>🔒 מסמכים פרטיים</h2>
+      <p class="small">${meta ? "הקלד את הסיסמה כדי לפתוח." : "בוחרים סיסמה פעם אחת. המסמכים נשמרים <b>מוצפנים רק בטלפון הזה</b>, לא באינטרנט ולא בסנכרון, ועובדים גם בלי חיבור. <b>אם שוכחים את הסיסמה, אי אפשר לשחזר אותם.</b>"}</p>
+      <div class="form"><input id="vPw" type="password" placeholder="סיסמה" autocomplete="current-password">${meta ? "" : `<input id="vPw2" type="password" placeholder="שוב את הסיסמה">`}
+      <button class="btn acc" id="vGo">${meta ? "פתיחה" : "יצירת אזור פרטי"}</button></div>`);
+    setTimeout(() => $("#vPw").focus(), 60);
+    $("#vGo").onclick = async () => { const pw = $("#vPw").value; if (pw.length < 4) return toast("סיסמה של 4 תווים לפחות");
+      try {
+        if (!meta) { if (pw !== $("#vPw2").value) return toast("הסיסמאות לא זהות"); const salt = crypto.getRandomValues(new Uint8Array(16)); vaultKey = await deriveKey(pw, salt);
+          const chk = await enc(new TextEncoder().encode("ok")); await vdb.put("__meta", { salt, chk }); }
+        else { vaultKey = await deriveKey(pw, meta.salt); await dec(meta.chk); }
+        openVault();
+      } catch { vaultKey = null; toast("סיסמה שגויה"); } };
+    return;
+  }
+  const keys = (await vdb.keys()).filter(k => k !== "__meta"), items = [];
+  for (const k of keys) { try { const o = await vdb.get(k); items.push({ k, m: JSON.parse(new TextDecoder().decode(await dec(o.meta))), at: o.at }); } catch {} }
+  items.sort((a, b) => b.at - a.at);
+  openSheet(`<h2>🔓 מסמכים פרטיים</h2>
+    <div class="list">${items.map(x => `<div class="chg"><button class="linkish" data-vopen="${x.k}">${x.m.type.startsWith("image") ? "🖼" : x.m.type === "text" ? "📝" : "📄"} ${esc(x.m.name)}</button><button class="btn ghost sm" data-vdel="${x.k}">מחיקה</button></div>`).join("") || `<p class="muted">עוד אין מסמכים.</p>`}</div>
+    <div class="form" style="margin-top:12px"><label for="vFile">הוספת צילום או PDF (דרכון, אישור הזמנה, ביטוח)</label><input id="vFile" type="file" accept="image/*,application/pdf" multiple>
+      <label for="vTxt">או טקסט (למשל מספרי הזמנה)</label><textarea id="vTxt" rows="3" placeholder="CarFlexi: …"></textarea><input id="vTn" type="text" placeholder="כותרת לטקסט">
+      <div class="row"><button class="btn acc" id="vAdd">שמירה מוצפנת</button><button class="btn ghost" id="vLock">🔒 נעילה</button></div></div>`);
+  const sh = $("#sheet");
+  sh.querySelectorAll("[data-vopen]").forEach(b => b.onclick = async () => { const o = await vdb.get(b.dataset.vopen); const m = JSON.parse(new TextDecoder().decode(await dec(o.meta))); const buf = await dec(o.blob);
+    if (m.type === "text") return openSheet(`<h2>📝 ${esc(m.name)}</h2><div class="copyable" style="white-space:pre-wrap">${esc(new TextDecoder().decode(buf))}</div><div class="row"><button class="btn ghost" id="vBack">חזרה</button></div>`), $("#vBack").onclick = openVault;
+    const url = URL.createObjectURL(new Blob([buf], { type: m.type }));
+    openSheet(`<h2>${esc(m.name)}</h2>${m.type.startsWith("image") ? `<img class="photo" src="${url}" alt="">` : `<p><a class="btn acc" href="${url}" target="_blank" rel="noopener">פתיחת ה-PDF</a></p>`}<div class="row"><button class="btn ghost" id="vBack">חזרה</button></div>`); $("#vBack").onclick = openVault; });
+  sh.querySelectorAll("[data-vdel]").forEach(b => b.onclick = async () => { await vdb.del(b.dataset.vdel); openVault(); });
+  $("#vLock").onclick = () => { vaultKey = null; closeSheet(); toast("ננעל"); };
+  $("#vAdd").onclick = async () => { const files = [...$("#vFile").files], t = $("#vTxt").value.trim();
+    for (const f of files) { const m = await enc(new TextEncoder().encode(JSON.stringify({ name: f.name, type: f.type || "application/octet-stream" }))); const b = await enc(await f.arrayBuffer()); await vdb.put("d" + Date.now() + Math.random().toString(36).slice(2, 6), { meta: m, blob: b, at: Date.now() }); }
+    if (t) { const m = await enc(new TextEncoder().encode(JSON.stringify({ name: $("#vTn").value.trim() || "הערה", type: "text" }))); const b = await enc(new TextEncoder().encode(t)); await vdb.put("t" + Date.now(), { meta: m, blob: b, at: Date.now() }); }
+    if (files.length || t) { toast("נשמר מוצפן ✓"); openVault(); } else toast("בחר קובץ או כתוב טקסט"); };
+}
+document.addEventListener("visibilitychange", () => { if (document.hidden) vaultKey = null; });
+
+// ---------- הכנה לטיסה (עבודה בלי אינטרנט) ----------
+async function prepOffline() {
+  openSheet(`<h2>✈️ הכנה לטיסה</h2><p class="small">מוריד לטלפון את כל מה שצריך כדי שהתכנית, הכרטיסים, התמונות וזמני ההליכה יעבדו גם בלי אינטרנט. כדאי להריץ בוויי-פיי בבית.</p>
+    <div class="meter"><span id="prepBar" style="width:0%"></span></div><p class="small" id="prepTxt">מתחיל…</p>
+    <div class="briefbox"><h3>🗺 גם המפה של גוגל בלי אינטרנט</h3><p class="small">המפה באפליקציה צריכה אינטרנט. בשביל ניווט בלי חיבור: באפליקציית <b>Google Maps</b> ← התמונה שלך למעלה ← <b>מפות אופליין</b> ← <b>בחירת מפה משלך</b> ← מסמנים את בודפשט ואת עיקול הדנובה ← <b>הורדה</b>.</p></div>`);
+  const bar = () => $("#prepBar"), txt = () => $("#prepTxt");
+  const places = T.places.filter(p => statusOf(p) !== "skip" && !p.mine), pairs = [];
+  T.days.forEach(d => { let prev = null; d.items.forEach(it => { const p = it.place && P[it.place]; if (!p) return; if (prev && prev.id !== p.id) pairs.push([prev, p]); prev = p; }); });
+  const total = places.length + pairs.length + 1; let done = 0; const tick = m => { done++; if (bar()) bar().style.width = Math.round(done / total * 100) + "%"; if (txt()) txt().textContent = m; };
+  try { await loadGoogle(); } catch {}
+  for (const p of places) { try { await resolve(p); } catch {} tick("פרטי מקומות: " + p.he); }
+  for (const [a, b] of pairs) { try { await leg(a, b); } catch {} tick("זמני הליכה: " + b.he); }
+  try { const c = await caches.open("tc-img"); const urls = [...new Set(Object.values(infoCache).map(x => x.photo).filter(Boolean))];
+    for (let i = 0; i < urls.length; i += 6) await Promise.all(urls.slice(i, i + 6).map(u => fetch(u, { mode: "no-cors" }).then(r => c.put(u, r)).catch(() => {}))); } catch {}
+  await loadWeather(); await loadFx(); tick("מזג אוויר ושערי מטבע");
+  if (txt()) txt().innerHTML = "<b>✅ מוכן.</b> הכל שמור בטלפון. כדאי להריץ שוב יום לפני הטיסה, כדי שהתחזית תהיה עדכנית.";
+}
+
+// ---------- "ביקרנו" לפי מיקום ----------
+let proxSeen = {};
+function startProximity() {
+  if (!navigator.geolocation || !tripLive()) return;
+  navigator.geolocation.watchPosition(pos => {
+    me = { lat: pos.coords.latitude, lng: pos.coords.longitude }; if (pos.coords.accuracy > 120) return;
+    const d = T.days.find(x => x.date === budDate()); if (!d) return;
+    for (const it of d.items) { const p = it.place && P[it.place]; if (!p || p.layer === "hotel" || proxSeen[p.id] || statusOf(p) === "visited") continue;
+      if (hav(me, loc(p)) < 90) { proxSeen[p.id] = 1; showProx(p); break; } }
+  }, () => {}, { enableHighAccuracy: true, maximumAge: 30000 });
+}
+function showProx(p) {
+  let b = $("#prox"); if (!b) { b = document.createElement("div"); b.id = "prox"; b.className = "prox"; document.body.appendChild(b); }
+  b.innerHTML = `<span>📍 אתם ב<b>${esc(p.he)}</b>?</span><button class="btn acc sm" id="pxYes">✓ ביקרנו</button><button class="btn ghost sm" id="pxNo">לא עכשיו</button>`; b.hidden = false;
+  $("#pxYes").onclick = () => { statusOv[p.id] = "visited"; store.set("status", statusOv); markShared(); b.hidden = true; toast("סומן: ביקרנו ✓"); if (view === "today") renderToday(); };
+  $("#pxNo").onclick = () => b.hidden = true;
+}
+
 // ---------- ניווט בין מסכים ----------
 async function go(v) {
   view = v;
@@ -848,7 +1137,7 @@ async function render() {
   if (view === "docs") return renderDocs();
   if (view === "map") { renderLayerBar(); await ensureMap(); return refreshMarkers(); }
 }
-document.querySelector(".tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) go(b.dataset.view); });
+document.querySelector(".tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; if (b.dataset.act === "fx") return openFx(); go(b.dataset.view); });
 
 // ---------- התחלה ----------
 applyIdeas(); renderHeader(); renderHeaderWx(); go("today");
@@ -856,4 +1145,5 @@ pullRemote(); document.addEventListener("visibilitychange", () => { if (!documen
 if (!wx || Date.now() - wx.t > 3 * 3600e3) loadWeather();
 loadGoogle().catch(() => {});
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+startProximity();
 })();
