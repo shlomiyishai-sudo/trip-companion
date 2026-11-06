@@ -178,7 +178,9 @@ async function resolve(p, fresh = false) {
     t: Date.now(), gid: place.id, lat: place.location?.lat(), lng: place.location?.lng(),
     rating: place.rating, count: place.userRatingCount, price: PRICE[place.priceLevel] || "",
     hours: place.regularOpeningHours?.weekdayDescriptions || [], addr: place.formattedAddress || "",
-    photo: place.photos && place.photos[0] ? place.photos[0].getURI({ maxWidth: 800 }) : ""
+    photo: place.photos && place.photos[0] ? place.photos[0].getURI({ maxWidth: 800 }) : "",
+    periods: (place.regularOpeningHours?.periods || []).map(x => [x.open?.day, x.open?.hour, x.open?.minute, x.close ? x.close.day : null, x.close?.hour, x.close?.minute]),
+    addrHu: c && c.addrHu
   };
   infoCache[p.id] = d; store.set("info", infoCache);
   return { cached: d, place };
@@ -361,6 +363,7 @@ async function openPlace(p) {
       <div class="acts">
         <a class="btn acc" href="${gmapsDir(p)}" target="_blank" rel="noopener">🚶 ניווט בגוגל מפס</a>
         <button class="btn" id="showOnMap">הצג במפה</button>
+        <button class="btn ghost" id="taxiBtn">🚕 להראות לנהג</button>
         <a class="btn ghost" href="${c && c.gid ? gmapsPlace(p) : gmapsPlace(p)}" target="_blank" rel="noopener">פתח בגוגל מפס</a>
       </div>
       ${p.layer !== "hotel" ? `<div class="status" role="group" aria-label="סימון">${Object.entries(STATUS).map(([k, v]) => `<button data-st="${k}" class="${st === k ? "on" : ""}">${v}</button>`).join("")}</div>` : ""}
@@ -368,6 +371,7 @@ async function openPlace(p) {
     if (sayOf(p)) $("#plSay").onclick = () => openSay(sayOf(p), p.he);
     $("#plNote").onclick = () => editNote("pl:" + p.id, p.he, () => openPlace(p));
     $("#showOnMap").onclick = () => { closeSheet(); mapLayer = "all"; go("map").then(() => focusPlace(p)); };
+    $("#taxiBtn").onclick = () => openTaxi(p);
     $("#sheet").querySelectorAll("[data-st]").forEach(b => b.onclick = () => { statusOv[p.id] = b.dataset.st; store.set("status", statusOv); markShared(); draw(info(p.id), open); toast("סומן: " + STATUS[b.dataset.st]); refreshMarkers(); });
     if (p.id !== HOTEL.id) leg(HOTEL, p).then(l => { const f = $("#fromHotel"); if (f) f.innerHTML = `<span class="k">מהמלון:</span> ${l.mode === "WALK" ? "🚶" : "🚇"} ${fmtMin(l.sec)}${l.mode === "WALK" ? " (" + fmtDist(l.m) + ")" : ""}`; });
     else { const f = $("#fromHotel"); if (f) f.remove(); }
@@ -386,7 +390,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeSheet()
 
 // ---------- מפה ----------
 let map, markers = [], dayLines = [], me = null, meMarker = null, mapLayer = "day";
-const MAPLAYERS = () => [["day", "תוכנית היום", "#D9622B"], ...Object.entries(T.layers).map(([k, v]) => [k, v.name, v.color]), ["visited", "ביקרנו", "#2E8B57"], ["all", "הכל", "#14262E"]];
+const MAPLAYERS = () => [["day", "תוכנית היום", "#D9622B"], ...Object.entries(T.layers).map(([k, v]) => [k, v.name, v.color]), ["open", "פתוח עכשיו", "#1E9E6A"], ["visited", "ביקרנו", "#2E8B57"], ["all", "הכל", "#14262E"]];
 function renderLayerBar() { $("#layerBar").innerHTML = MAPLAYERS().map(([k, n, c]) => `<button data-layer="${k}" class="${k === mapLayer ? "on" : ""}"><span class="sw" style="background:${c}"></span>${esc(n)}</button>`).join("") + `<button data-diag="1">🔧 בדיקת חיבור</button>`; }
 $("#layerBar").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; if (b.dataset.diag) return diagnose(); mapLayer = b.dataset.layer; renderLayerBar(); refreshMarkers(); });
 async function ensureMap() {
@@ -417,7 +421,10 @@ async function refreshMarkers() {
     list = ids.map(id => P[id]);
   } else if (mapLayer === "all") list = T.places;
   else if (mapLayer === "visited") list = T.places.filter(p => statusOf(p) === "visited");
+  else if (mapLayer === "open") { list = T.places.filter(p => p.layer !== "hotel" && statusOf(p) !== "skip" && openNow(p) === true); fillHours();
+    const n = $("#mapNote"); n.innerHTML = `🟢 ${list.length} מקומות מהרשימה שלנו פתוחים עכשיו, לפי שעון בודפשט (${String(Math.floor(budMin() / 60)).padStart(2, "0")}:${String(budMin() % 60).padStart(2, "0")}). <span class="muted small">מקומות בלי שעות פתיחה בגוגל לא מוצגים.</span>`; n.hidden = false; }
   else list = T.places.filter(p => layerOf(p) === mapLayer && statusOf(p) !== "skip");
+  if (mapLayer !== "open" && !gErr) $("#mapNote").hidden = true;
   if (!list.includes(HOTEL)) list = [HOTEL, ...list];
   const bounds = new google.maps.LatLngBounds();
   for (const p of list) {
@@ -467,12 +474,13 @@ function getMe() {
 let placeFilter = "all", placeQ = "";
 function renderPlaces() {
   const el = $("#view-places");
-  const F = [["all","הכל"],["sights",T.layers.sights.name],["food",T.layers.food.name],["shop",T.layers.shop.name],["must","חובה"],["maybe","אולי"],["visited","ביקרנו"]];
-  const match = p => p.layer !== "hotel" && (placeFilter === "all" ? statusOf(p) !== "skip" : ["must","maybe","visited"].includes(placeFilter) ? statusOf(p) === placeFilter : layerOf(p) === placeFilter);
+  const F = [["all","הכל"],["sights",T.layers.sights.name],["food",T.layers.food.name],["shop",T.layers.shop.name],["must","חובה"],["maybe","אולי"],["visited","ביקרנו"],["open","🟢 פתוח עכשיו"]];
+  if (placeFilter === "open") fillHours(renderPlaces);
+  const match = p => p.layer !== "hotel" && (placeFilter === "open" ? statusOf(p) !== "skip" && openNow(p) === true : placeFilter === "all" ? statusOf(p) !== "skip" : ["must","maybe","visited"].includes(placeFilter) ? statusOf(p) === placeFilter : layerOf(p) === placeFilter);
   const ql = placeQ.trim().toLowerCase();
   const list = T.places.filter(p => ql ? p.layer !== "hotel" && (p.he + " " + p.name + " " + (p.why || "")).toLowerCase().includes(ql) : match(p)).sort((a, b) => hav(HOTEL, a) - hav(HOTEL, b));
   el.innerHTML = `<input id="placeQ" class="search" type="search" placeholder="🔎 חיפוש מקום לפי שם…" value="${esc(placeQ)}"><div class="filters">${F.map(([k, n]) => `<button data-f="${k}" class="${k === placeFilter ? "on" : ""}">${esc(n)}</button>`).join("")}</div>
-    <div class="plist">${list.map(p => card(p, hav(HOTEL, loc(p)), "מהמלון")).join("") || `<p class="muted">אין כאן עדיין מקומות.</p>`}</div>`;
+    <div class="plist">${list.map(p => card(p, hav(HOTEL, loc(p)), "מהמלון")).join("") || `<p class="muted">${placeFilter === "open" ? "בודק שעות פתיחה בגוגל… (צריך חיבור לאינטרנט)" : "אין כאן עדיין מקומות."}</p>`}</div>`;
   el.querySelectorAll("[data-f]").forEach(b => b.onclick = () => { placeFilter = b.dataset.f; renderPlaces(); });
   const pq = $("#placeQ"); pq.oninput = () => { placeQ = pq.value; renderPlaces(); const n = $("#placeQ"); n.focus(); n.setSelectionRange(n.value.length, n.value.length); };
 }
@@ -913,8 +921,9 @@ async function drawNowBar(d, cur, nxt) {
   const mins = tmin(it.time) - budMin(), p = it.place && P[it.place];
   const inTxt = mins <= 0 ? "עכשיו" : mins < 60 ? `בעוד ${mins} דק'` : `בעוד ${Math.floor(mins / 60)}:${String(mins % 60).padStart(2, "0")} ש'`;
   box.innerHTML = `<div class="nowbar"><span class="nb-k">⏭ הבא בתור · ${inTxt}</span><span class="nb-t"><b>${esc(it.time)}</b> ${esc(it.text)}</span>
-    <span class="nb-r"><span id="nbWalk"></span>${p ? `<a class="btn acc sm" href="${gmapsDir(p, hav(HOTEL, loc(p)) > 2500 ? "transit" : "walking")}" target="_blank" rel="noopener">↗ ניווט</a>` : ""}</span></div>`;
+    <span class="nb-r"><span id="nbWalk"></span>${p ? `<button class="btn ghost sm" id="nbTaxi" aria-label="להראות לנהג">🚕</button>` : ""}${p ? `<a class="btn acc sm" href="${gmapsDir(p, hav(HOTEL, loc(p)) > 2500 ? "transit" : "walking")}" target="_blank" rel="noopener">↗ ניווט</a>` : ""}</span></div>`;
   if (!p) return;
+  $("#nbTaxi").onclick = () => openTaxi(p);
   const from = me ? { id: "__me", lat: me.lat, lng: me.lng } : (cur >= 0 && d.items[cur].place ? P[d.items[cur].place] : null);
   if (!from || from.id === p.id) return;
   const A = from.id === "__me" ? from : loc(from), dist = hav(A, loc(p));
@@ -1123,6 +1132,36 @@ function showProx(p) {
   $("#pxNo").onclick = () => b.hidden = true;
 }
 
+
+// ---------- פתוח עכשיו ----------
+function budWeekMin() { const wd = new Intl.DateTimeFormat("en-US", { timeZone: T.tz, weekday: "short" }).format(new Date()); return ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(wd) * 1440 + budMin(); }
+function openNow(p) {
+  const c = info(p.id); if (!c || !c.periods || !c.periods.length) return null;
+  const now = budWeekMin(), W = 10080;
+  return c.periods.some(([od, oh, om, cd, ch, cm]) => { if (od == null) return false; const o = od * 1440 + (oh || 0) * 60 + (om || 0);
+    let cl = cd == null ? o + W : cd * 1440 + (ch || 0) * 60 + (cm || 0); if (cl <= o) cl += W; return (now >= o && now < cl) || (now + W >= o && now + W < cl); });
+}
+let hoursFilling = false; const hoursTried = new Set();
+async function fillHours(after) {
+  if (hoursFilling) return; const need = T.places.filter(p => p.layer !== "hotel" && statusOf(p) !== "skip" && !p.mine && !hoursTried.has(p.id) && !(info(p.id) && info(p.id).periods)); if (!need.length) return;
+  need.forEach(p => hoursTried.add(p.id));
+  hoursFilling = true; try { for (let i = 0; i < need.length; i += 5) await Promise.all(need.slice(i, i + 5).map(p => resolve(p, true).catch(() => {}))); } finally { hoursFilling = false; }
+  if (after) after(); else if (view === "map" && mapLayer === "open") refreshMarkers();
+}
+
+// ---------- להראות לנהג המונית ----------
+async function openTaxi(p) {
+  const c = info(p.id) || {};
+  const addr0 = p.id === HOTEL.id ? "Dessewffy utca 14, 1066 Budapest" : (c.addrHu || "");
+  openSheet(`<div class="taxi"><div class="tx-hu">Kérem, vigyen el ide:</div><div class="tx-name">${esc(p.name)}</div>
+      <div class="tx-addr" id="txAddr">${esc(addr0 || p.q || "")}</div><div class="tx-en">Please take me here · בבקשה, קח אותי לכאן</div></div>
+    <div class="row" style="justify-content:center"><a class="btn acc" href="${gmapsDir(p, "driving")}" target="_blank" rel="noopener">↗ ניווט ברכב</a><button class="btn ghost" id="txCopy">העתקת הכתובת</button></div>
+    <p class="muted small" style="text-align:center">מסובבים את הטלפון לנהג. ב-Bolt מדביקים את הכתובת ביעד.</p>`);
+  $("#txCopy").onclick = async () => { try { await navigator.clipboard.writeText(($("#txAddr").textContent || "").trim()); toast("הועתק"); } catch { toast("סמן והעתק"); } };
+  if (addr0 || !c.gid) return;
+  try { const g = await loadGoogle(); const pl = new g.maps.places.Place({ id: c.gid, requestedLanguage: "hu" }); await pl.fetchFields({ fields: ["formattedAddress"] });
+    if (pl.formattedAddress) { c.addrHu = pl.formattedAddress.replace(/, Magyarország$|, Hungary$/, ""); infoCache[p.id] = { ...info(p.id), addrHu: c.addrHu }; store.set("info", infoCache); const a = $("#txAddr"); if (a) a.textContent = c.addrHu; } } catch {}
+}
 // ---------- ניווט בין מסכים ----------
 async function go(v) {
   view = v;
