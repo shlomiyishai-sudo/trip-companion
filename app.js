@@ -1164,7 +1164,7 @@ async function openTaxi(p) {
     if (pl.formattedAddress) { c.addrHu = pl.formattedAddress.replace(/, Magyarország$|, Hungary$/, ""); infoCache[p.id] = { ...info(p.id), addrHu: c.addrHu }; store.set("info", infoCache); const a = $("#txAddr"); if (a) a.textContent = c.addrHu; } } catch {}
 }
 // ---------- סיכום יומי עם מפה מונפשת ----------
-const STEP_PER_M = 1.32; // כ-0.76 מ' לצעד
+const STEP_M = 0.65, STEP_PER_M = 1 / STEP_M; // 65 ס"מ לצעד
 function trackOf(date) { return store.get("trk:" + date, []); }
 function recordTrack(pos) {
   if (pos.coords.accuracy > 60) return; const date = budDate(), t = trackOf(date), pt = [+pos.coords.latitude.toFixed(6), +pos.coords.longitude.toFixed(6), Date.now()];
@@ -1202,7 +1202,7 @@ async function openDaySummary(di = day) {
   const trk = trackOf(d.date); let gpsM = 0; for (let i = 1; i < trk.length; i++) gpsM += hav({ lat: trk[i - 1][0], lng: trk[i - 1][1] }, { lat: trk[i][0], lng: trk[i][1] });
   const stepsMan = store.get("steps", {})[d.date], kmMan = store.get("kmDay", {})[d.date];
   const routeM = Math.max(walkM, gpsM * 0.85);
-  const km = kmMan ? kmMan * 1000 : stepsMan ? stepsMan * 0.75 : routeM, estSteps = Math.round(km * STEP_PER_M / 100) * 100;
+  const km = kmMan ? kmMan * 1000 : stepsMan ? stepsMan * STEP_M : routeM, estSteps = Math.round(km * STEP_PER_M / 100) * 100;
   const kmLbl = kmMan ? "ק\"מ (מהטלפון)" : stepsMan ? "ק\"מ (לפי הצעדים)" : "ק\"מ ברגל (הערכה)";
   const w2 = next && wxFor(next.date);
   const nFirst = next && (next.items.find(i => i.anchor && /^\d/.test(i.time)) || next.items.find(i => /^\d/.test(i.time)));
