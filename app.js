@@ -262,7 +262,7 @@ async function renderToday() {
       <h2>${esc(d.title)}</h2>
       <p class="hero-sum">${esc(d.summary)}</p>
       <div class="hero-chips">
-        <button class="hchip main" data-hero="brief">${evening ? "🌙 סיכום היום" : "☀️ תדריך היום"}</button>
+        ${evening || d.date < todayStr ? `<button class="hchip main" data-hero="summary">🌙 סיכום היום</button>` : ""}<button class="hchip ${evening || d.date < todayStr ? "" : "main"}" data-hero="brief">☀️ תדריך</button>
         ${anchors.length ? `<button class="hchip" data-hero="anchors">⏰ ${anchors.length} עוגנים</button>` : ""}
         ${uniq.length ? `<button class="hchip todo" data-hero="todo">🎫 ${uniq.length} להזמין</button>` : ""}
         <button class="hchip" data-hero="tips">💡 טיפים</button>
@@ -271,7 +271,7 @@ async function renderToday() {
     <div id="nowBar"></div>
     <div class="daystats" id="dayStats">מחשב זמני הליכה…</div>
     <ol class="timeline" id="tl"></ol>`;
-  el.querySelectorAll("[data-hero]").forEach(b => b.onclick = () => heroSheet(b.dataset.hero, d, w, evening, anchors, uniq));
+  el.querySelectorAll("[data-hero]").forEach(b => b.onclick = () => b.dataset.hero === "summary" ? openDaySummary(day) : heroSheet(b.dataset.hero, d, w, evening, anchors, uniq));
   const numT = d.items.map(it => /^\d{1,2}:\d{2}$/.test(it.time || "") ? tmin(it.time) : null);
   let curIdx = -1, nextIdx = -1;
   if (isToday) { numT.forEach((m, i) => { if (m == null) return; if (m <= nowM) curIdx = i; else if (nextIdx < 0) nextIdx = i; }); }
@@ -506,6 +506,7 @@ function renderDocs() {
       <button class="tool" data-tool="pack"><span>🎒</span>אריזה</button>
       <button class="tool" data-tool="vault"><span>🔒</span>מסמכים פרטיים</button>
       <button class="tool" data-tool="done"><span>🗺</span>מה שעשינו</button>
+      <button class="tool" data-tool="sum"><span>🌙</span>סיכומי הימים</button>
     </div>
     <div class="doc syncbox"><div class="row nowrap" style="justify-content:space-between"><span><b>🔄 סנכרון:</b> ${ghToken ? "מחובר" : "לא מחובר במכשיר הזה"}${planDirty ? " · יש שינויים שממתינים" : ""}</span><button class="btn ghost sm" id="syncSet">${ghToken ? "הגדרות" : "חיבור"}</button></div></div>
     <div class="row" style="margin-top:8px"><button class="btn" id="openBoard2">🗂 לוח התכנון (גרירה בין ימים)</button></div>
@@ -557,7 +558,7 @@ function renderDocs() {
   $("#shopping").oninput = e => store.set("shopping", e.target.value);
   $("#gmList").onclick = openGmList;
   $("#vaultBtn2").onclick = openVault;
-  el.querySelectorAll("[data-tool]").forEach(b => b.onclick = () => ({ prep: prepOffline, ics: exportIcs, exp: openExpenses, pack: openPacking, vault: openVault, done: () => { mapLayer = "visited"; go("map"); toast("כל המקומות שסימנתם \"ביקרנו\". מכאן אפשר גם לייצא ל-My Maps") } })[b.dataset.tool]());
+  el.querySelectorAll("[data-tool]").forEach(b => b.onclick = () => ({ prep: prepOffline, ics: exportIcs, exp: openExpenses, pack: openPacking, sum: () => openSheet(`<h2>🌙 סיכומי הימים</h2><div class="list">${T.days.map((d, i) => `<button class="ti-card" data-sumd="${i}"><span class="tx"><span class="nm">יום ${i + 1} · ${esc(dayLabel(d))}</span><span class="sb">${esc(d.title)}</span></span></button>`).join("")}</div>`) || $("#sheet").querySelectorAll("[data-sumd]").forEach(x => x.onclick = () => openDaySummary(+x.dataset.sumd)), vault: openVault, done: () => { mapLayer = "visited"; go("map"); toast("כל המקומות שסימנתם \"ביקרנו\". מכאן אפשר גם לייצא ל-My Maps") } })[b.dataset.tool]());
   $("#kmlAll").onclick = () => kml(T.places.filter(p => statusOf(p) !== "skip"), "budapest-all");
   $("#kmlVisited").onclick = () => { const v = T.places.filter(p => statusOf(p) === "visited"); if (!v.length) return toast("עוד לא סימנתם מקומות כ\"ביקרנו\""); kml(v, "budapest-visited"); };
 }
@@ -1119,7 +1120,7 @@ let proxSeen = {};
 function startProximity() {
   if (!navigator.geolocation || !tripLive()) return;
   navigator.geolocation.watchPosition(pos => {
-    me = { lat: pos.coords.latitude, lng: pos.coords.longitude }; if (pos.coords.accuracy > 120) return;
+    me = { lat: pos.coords.latitude, lng: pos.coords.longitude }; recordTrack(pos); if (pos.coords.accuracy > 120) return;
     const d = T.days.find(x => x.date === budDate()); if (!d) return;
     for (const it of d.items) { const p = it.place && P[it.place]; if (!p || p.layer === "hotel" || proxSeen[p.id] || statusOf(p) === "visited") continue;
       if (hav(me, loc(p)) < 90) { proxSeen[p.id] = 1; showProx(p); break; } }
@@ -1161,6 +1162,86 @@ async function openTaxi(p) {
   if (addr0 || !c.gid) return;
   try { const g = await loadGoogle(); const pl = new g.maps.places.Place({ id: c.gid, requestedLanguage: "hu" }); await pl.fetchFields({ fields: ["formattedAddress"] });
     if (pl.formattedAddress) { c.addrHu = pl.formattedAddress.replace(/, Magyarország$|, Hungary$/, ""); infoCache[p.id] = { ...info(p.id), addrHu: c.addrHu }; store.set("info", infoCache); const a = $("#txAddr"); if (a) a.textContent = c.addrHu; } } catch {}
+}
+// ---------- סיכום יומי עם מפה מונפשת ----------
+const STEP_PER_M = 1.32; // כ-0.76 מ' לצעד
+function trackOf(date) { return store.get("trk:" + date, []); }
+function recordTrack(pos) {
+  if (pos.coords.accuracy > 60) return; const date = budDate(), t = trackOf(date), pt = [+pos.coords.latitude.toFixed(6), +pos.coords.longitude.toFixed(6), Date.now()];
+  const last = t[t.length - 1]; if (last && hav({ lat: last[0], lng: last[1] }, { lat: pt[0], lng: pt[1] }) < 35) return;
+  t.push(pt); if (t.length > 3000) t.shift(); store.set("trk:" + date, t);
+}
+function summaryStops(d) {
+  const isToday = d.date === budDate(), nowM = budMin(), seen = [];
+  const items = d.items.filter(it => it.place && P[it.place] && !(isToday && /^\d{1,2}:\d{2}$/.test(it.time || "") && tmin(it.time) > nowM + 30));
+  const anyVisited = items.some(it => statusOf(P[it.place]) === "visited");
+  for (const it of items) { const p = P[it.place]; if (p.mine) continue;
+    if (anyVisited && p.layer !== "hotel" && statusOf(p) !== "visited") continue;
+    if (seen.length && seen[seen.length - 1].id === p.id) continue; seen.push(p); }
+  if (seen.length && seen[0].id !== HOTEL.id && d.date !== T.days[0].date) seen.unshift(HOTEL);
+  if (seen.length && seen[seen.length - 1].id !== HOTEL.id && (!isToday || nowM >= 21 * 60)) seen.push(HOTEL);
+  return seen.map(p => p.id === "hotel-spa" ? HOTEL : p).filter((p, i, a) => !i || a[i - 1].id !== p.id);
+}
+let sumAnim = null;
+async function openDaySummary(di = day) {
+  const d = T.days[di], next = T.days[di + 1], stops = summaryStops(d);
+  const legs = []; for (let i = 1; i < stops.length; i++) legs.push(await leg(stops[i - 1], stops[i]));
+  const walkM = legs.filter(l => l.mode === "WALK").reduce((a, l) => a + l.m, 0), rideS = legs.filter(l => l.mode !== "WALK").reduce((a, l) => a + l.sec, 0);
+  const trk = trackOf(d.date); let gpsM = 0; for (let i = 1; i < trk.length; i++) gpsM += hav({ lat: trk[i - 1][0], lng: trk[i - 1][1] }, { lat: trk[i][0], lng: trk[i][1] });
+  const stepsMan = store.get("steps", {})[d.date];
+  const km = Math.max(walkM, gpsM * 0.85), estSteps = Math.round(km * STEP_PER_M / 100) * 100;
+  const w2 = next && wxFor(next.date);
+  const nFirst = next && (next.items.find(i => i.anchor && /^\d/.test(i.time)) || next.items.find(i => /^\d/.test(i.time)));
+  openSheet(`<h2>🌙 סיכום יום ${di + 1} · ${esc(dayLabel(d))}</h2><p class="muted small" style="margin-top:-4px">${esc(d.title)}</p>
+    <div class="sum-map-wrap"><div id="sumMap" class="sum-map"></div><button class="btn sm sum-replay" id="sumReplay">▶ שוב</button></div>
+    <div class="bigstats three">
+      <div><b id="stepsVal">${stepsMan ? fmtN(stepsMan) : "~" + fmtN(estSteps)}</b><span>${stepsMan ? "צעדים (מהטלפון)" : "צעדים (הערכה)"}</span></div>
+      <div><b>${(km / 1000).toFixed(1)}</b><span>ק"מ ברגל</span></div>
+      <div><b>${stops.filter(p => p.layer !== "hotel").length}</b><span>מקומות</span></div>
+    </div>
+    ${rideS ? `<p class="muted small" style="margin:0">🚕 ועוד כ-${fmtMin(rideS)} בנסיעות.${trk.length > 10 ? ` GPS תיעד ${(gpsM / 1000).toFixed(1)} ק"מ כשהאפליקציה הייתה פתוחה.` : ""}</p>` : ""}
+    <div class="row nowrap" style="margin:8px 0"><input id="stepsIn" type="number" inputmode="numeric" placeholder="צעדים מאפליקציית הבריאות" value="${stepsMan || ""}"><button class="btn ghost sm" id="stepsSave">שמירה</button></div>
+    <h3 class="sec-title">📍 המסלול שלנו היום</h3>
+    <ol class="sum-list">${stops.map((p, i) => `<li><span class="sum-n">${i + 1}</span><span>${esc(p.he)}</span>${i ? `<small>${legs[i - 1].mode === "WALK" ? "🚶 " + fmtDist(legs[i - 1].m) : "🚕 " + fmtMin(legs[i - 1].sec)}</small>` : ""}</li>`).join("")}</ol>
+    ${next ? `<div class="promo"><div class="promo-k">מחר · יום ${di + 2} · ${esc(dayLabel(next))}</div>
+      <div class="promo-wx">${w2 ? `<span class="promo-ic">${WXI(w2.code)}</span><span><b>${w2.min}°–${w2.max}°</b><br><small>☔ ${w2.rain}% · 💨 ${w2.wind} קמ"ש${w2.sunset ? " · 🌇 " + w2.sunset : ""}</small></span>` : `<span>🌤 התחזית עוד לא זמינה</span>`}</div>
+      <div class="promo-t">${esc(next.title)}</div>
+      ${nFirst ? `<div class="small">⏰ מתחילים ב-${esc(nFirst.time)}: ${esc(nFirst.text.slice(0, 80))}</div>` : ""}
+      <div class="small" style="margin-top:4px">${esc(wxAdvice(w2, next))}</div>
+      <div class="row" style="margin-top:6px">${bringFor(next, w2).slice(0, 5).map(x => `<span class="pill">${esc(x)}</span>`).join("")}</div></div>` : `<div class="promo"><div class="promo-t">זה היה היום האחרון. טיסה טובה הביתה ❤️</div></div>`}`);
+  $("#stepsSave").onclick = () => { const v = parseInt($("#stepsIn").value); const s = store.get("steps", {}); if (v) s[d.date] = v; else delete s[d.date]; store.set("steps", s); toast("נשמר"); openDaySummary(di); };
+  drawSummaryMap(stops, legs, trk);
+}
+async function drawSummaryMap(stops, legs, trk) {
+  let g; try { g = await loadGoogle(); } catch { const m = $("#sumMap"); if (m) m.innerHTML = `<p class="muted" style="padding:20px">המפה צריכה אינטרנט</p>`; return; }
+  const el = $("#sumMap"); if (!el || !stops.length) return;
+  const { Map } = await g.maps.importLibrary("maps"), { AdvancedMarkerElement } = await g.maps.importLibrary("marker");
+  const m = new Map(el, { center: loc(stops[0]), zoom: 14, mapId: C.mapId, disableDefaultUI: true, gestureHandling: "cooperative" });
+  const b = new g.maps.LatLngBounds(); stops.forEach(p => b.extend(loc(p))); m.fitBounds(b, 40);
+  const segs = legs.map((l, i) => ({ mode: l.mode, path: (l.poly ? g.maps.geometry.encoding.decodePath(l.poly).map(x => ({ lat: x.lat(), lng: x.lng() })) : [loc(stops[i]), loc(stops[i + 1])]) }));
+  const pins = stops.map((p, i) => { const e = document.createElement("div"); e.className = "pin num sum-pin"; e.style.background = p.layer === "hotel" ? "#111" : colorOf(p); e.innerHTML = `<span>${p.layer === "hotel" ? "🏨" : i + 1}</span>`; e.style.opacity = i ? "0" : "1";
+    return new AdvancedMarkerElement({ map: m, position: loc(p), content: e, title: p.he }); });
+  const mover = document.createElement("div"); mover.className = "sum-mover"; mover.textContent = "🚶";
+  const mk = new AdvancedMarkerElement({ map: m, position: loc(stops[0]), content: mover, zIndex: 999 });
+  if (trk.length > 10) new g.maps.Polyline({ map: m, path: trk.map(t => ({ lat: t[0], lng: t[1] })), strokeColor: "#7A4DD8", strokeOpacity: .35, strokeWeight: 3 });
+  const run = () => {
+    if (sumAnim) cancelAnimationFrame(sumAnim); const lines = [];
+    pins.forEach((p, i) => p.content.style.opacity = i ? "0" : "1");
+    let si = 0, pi = 0, line = null; const speed = Math.max(2, Math.round(segs.reduce((a, s) => a + s.path.length, 0) / 260));
+    const step = () => {
+      if (!$("#sumMap")) return;
+      const s = segs[si]; if (!s) { mover.textContent = "🏁"; return; }
+      if (!line) { mover.textContent = s.mode === "WALK" ? "🚶" : "🚕";
+        line = new g.maps.Polyline({ map: m, path: [], strokeColor: s.mode === "WALK" ? "#D9622B" : "#2F6FDE", strokeOpacity: s.mode === "WALK" ? .95 : 0, strokeWeight: 5,
+          icons: s.mode === "WALK" ? [] : [{ icon: { path: "M 0,-1 0,1", strokeOpacity: 1, scale: 3.5, strokeColor: "#2F6FDE" }, offset: "0", repeat: "12px" }] }); lines.push(line); }
+      for (let k = 0; k < speed && pi < s.path.length; k++, pi++) line.getPath().push(new g.maps.LatLng(s.path[pi]));
+      mk.position = s.path[Math.min(pi, s.path.length - 1)];
+      if (pi >= s.path.length) { si++; pi = 0; line = null; if (pins[si]) pins[si].content.style.opacity = "1"; }
+      sumAnim = requestAnimationFrame(step);
+    };
+    run.lines && run.lines.forEach(l => l.setMap(null)); run.lines = lines; step();
+  };
+  run(); $("#sumReplay").onclick = run;
 }
 // ---------- ניווט בין מסכים ----------
 async function go(v) {
