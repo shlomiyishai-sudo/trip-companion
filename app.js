@@ -372,7 +372,7 @@ async function openPlace(p) {
     $("#plNote").onclick = () => editNote("pl:" + p.id, p.he, () => openPlace(p));
     $("#showOnMap").onclick = () => { closeSheet(); mapLayer = "all"; go("map").then(() => focusPlace(p)); };
     $("#taxiBtn").onclick = () => openTaxi(p);
-    $("#sheet").querySelectorAll("[data-st]").forEach(b => b.onclick = () => { statusOv[p.id] = b.dataset.st; store.set("status", statusOv); markShared(); draw(info(p.id), open); toast("סומן: " + STATUS[b.dataset.st]); refreshMarkers(); });
+    $("#sheet").querySelectorAll("[data-st]").forEach(b => b.onclick = () => { statusOv[p.id] = b.dataset.st; if (b.dataset.st === "visited") markVisitedAt(p.id); store.set("status", statusOv); markShared(); draw(info(p.id), open); toast("סומן: " + STATUS[b.dataset.st]); refreshMarkers(); });
     if (p.id !== HOTEL.id) leg(HOTEL, p).then(l => { const f = $("#fromHotel"); if (f) f.innerHTML = `<span class="k">מהמלון:</span> ${l.mode === "WALK" ? "🚶" : "🚇"} ${fmtMin(l.sec)}${l.mode === "WALK" ? " (" + fmtDist(l.m) + ")" : ""}`; });
     else { const f = $("#fromHotel"); if (f) f.remove(); }
   };
@@ -1129,7 +1129,7 @@ function startProximity() {
 function showProx(p) {
   let b = $("#prox"); if (!b) { b = document.createElement("div"); b.id = "prox"; b.className = "prox"; document.body.appendChild(b); }
   b.innerHTML = `<span>📍 אתם ב<b>${esc(p.he)}</b>?</span><button class="btn acc sm" id="pxYes">✓ ביקרנו</button><button class="btn ghost sm" id="pxNo">לא עכשיו</button>`; b.hidden = false;
-  $("#pxYes").onclick = () => { statusOv[p.id] = "visited"; store.set("status", statusOv); markShared(); b.hidden = true; toast("סומן: ביקרנו ✓"); if (view === "today") renderToday(); };
+  $("#pxYes").onclick = () => { statusOv[p.id] = "visited"; markVisitedAt(p.id); store.set("status", statusOv); markShared(); b.hidden = true; toast("סומן: ביקרנו ✓"); if (view === "today") renderToday(); };
   $("#pxNo").onclick = () => b.hidden = true;
 }
 
@@ -1171,13 +1171,25 @@ function recordTrack(pos) {
   const last = t[t.length - 1]; if (last && hav({ lat: last[0], lng: last[1] }, { lat: pt[0], lng: pt[1] }) < 35) return;
   t.push(pt); if (t.length > 3000) t.shift(); store.set("trk:" + date, t);
 }
+function markVisitedAt(id) { const v = store.get("vat", {}); v[id] = { t: Date.now(), d: budDate() }; store.set("vat", v); }
 function summaryStops(d) {
+  const custom = store.get("sumOrder", {})[d.date];
+  if (custom && custom.length) return custom.map(id => P[id]).filter(Boolean);
+  const vat = store.get("vat", {});
+  const extra = Object.entries(vat).filter(([id, x]) => x.d === d.date && P[id] && !d.items.some(it => it.place === id)).map(([id]) => id);
+  const auto = summaryStopsPlan(d, extra);
+  const timed = auto.filter(p => vat[p.id] && vat[p.id].d === d.date);
+  if (timed.length >= 2) { const sorted = timed.slice().sort((a, b) => vat[a.id].t - vat[b.id].t); let k = 0; return auto.map(p => vat[p.id] && vat[p.id].d === d.date ? sorted[k++] : p); }
+  return auto;
+}
+function summaryStopsPlan(d, extra = []) {
   const isToday = d.date === budDate(), nowM = budMin(), seen = [];
   const items = d.items.filter(it => it.place && P[it.place] && !(isToday && /^\d{1,2}:\d{2}$/.test(it.time || "") && tmin(it.time) > nowM + 30));
   const anyVisited = items.some(it => statusOf(P[it.place]) === "visited");
   for (const it of items) { const p = P[it.place]; if (p.mine) continue;
     if (anyVisited && p.layer !== "hotel" && statusOf(p) !== "visited") continue;
     if (seen.length && seen[seen.length - 1].id === p.id) continue; seen.push(p); }
+  extra.forEach(id => { if (!seen.some(p => p.id === id)) seen.push(P[id]); });
   if (seen.length && seen[0].id !== HOTEL.id && d.date !== T.days[0].date) seen.unshift(HOTEL);
   if (seen.length && seen[seen.length - 1].id !== HOTEL.id && (!isToday || nowM >= 21 * 60)) seen.push(HOTEL);
   return seen.map(p => p.id === "hotel-spa" ? HOTEL : p).filter((p, i, a) => !i || a[i - 1].id !== p.id);
@@ -1188,20 +1200,23 @@ async function openDaySummary(di = day) {
   const legs = []; for (let i = 1; i < stops.length; i++) legs.push(await leg(stops[i - 1], stops[i]));
   const walkM = legs.filter(l => l.mode === "WALK").reduce((a, l) => a + l.m, 0), rideS = legs.filter(l => l.mode !== "WALK").reduce((a, l) => a + l.sec, 0);
   const trk = trackOf(d.date); let gpsM = 0; for (let i = 1; i < trk.length; i++) gpsM += hav({ lat: trk[i - 1][0], lng: trk[i - 1][1] }, { lat: trk[i][0], lng: trk[i][1] });
-  const stepsMan = store.get("steps", {})[d.date];
-  const km = Math.max(walkM, gpsM * 0.85), estSteps = Math.round(km * STEP_PER_M / 100) * 100;
+  const stepsMan = store.get("steps", {})[d.date], kmMan = store.get("kmDay", {})[d.date];
+  const routeM = Math.max(walkM, gpsM * 0.85);
+  const km = kmMan ? kmMan * 1000 : stepsMan ? stepsMan * 0.75 : routeM, estSteps = Math.round(km * STEP_PER_M / 100) * 100;
+  const kmLbl = kmMan ? "ק\"מ (מהטלפון)" : stepsMan ? "ק\"מ (לפי הצעדים)" : "ק\"מ ברגל (הערכה)";
   const w2 = next && wxFor(next.date);
   const nFirst = next && (next.items.find(i => i.anchor && /^\d/.test(i.time)) || next.items.find(i => /^\d/.test(i.time)));
   openSheet(`<h2>🌙 סיכום יום ${di + 1} · ${esc(dayLabel(d))}</h2><p class="muted small" style="margin-top:-4px">${esc(d.title)}</p>
     <div class="sum-map-wrap"><div id="sumMap" class="sum-map"></div><button class="btn sm sum-replay" id="sumReplay">▶ שוב</button></div>
     <div class="bigstats three">
       <div><b id="stepsVal">${stepsMan ? fmtN(stepsMan) : "~" + fmtN(estSteps)}</b><span>${stepsMan ? "צעדים (מהטלפון)" : "צעדים (הערכה)"}</span></div>
-      <div><b>${(km / 1000).toFixed(1)}</b><span>ק"מ ברגל</span></div>
+      <div><b>${(km / 1000).toFixed(1)}</b><span>${kmLbl}</span></div>
       <div><b>${stops.filter(p => p.layer !== "hotel").length}</b><span>מקומות</span></div>
     </div>
     ${rideS ? `<p class="muted small" style="margin:0">🚕 ועוד כ-${fmtMin(rideS)} בנסיעות.${trk.length > 10 ? ` GPS תיעד ${(gpsM / 1000).toFixed(1)} ק"מ כשהאפליקציה הייתה פתוחה.` : ""}</p>` : ""}
-    <div class="row nowrap" style="margin:8px 0"><input id="stepsIn" type="number" inputmode="numeric" placeholder="צעדים מאפליקציית הבריאות" value="${stepsMan || ""}"><button class="btn ghost sm" id="stepsSave">שמירה</button></div>
-    <h3 class="sec-title">📍 המסלול שלנו היום</h3>
+    <div class="row nowrap" style="margin:8px 0"><input id="stepsIn" type="number" inputmode="numeric" placeholder="צעדים" value="${stepsMan || ""}"><input id="kmIn" type="number" inputmode="decimal" step="0.1" placeholder="ק&quot;מ" value="${kmMan || ""}"><button class="btn ghost sm" id="stepsSave">שמירה</button></div>
+    <p class="muted small" style="margin:-4px 0 6px">מעתיקים מאפליקציית הבריאות את הצעדים ואת "מרחק הליכה וריצה". אם יש רק צעדים, הק"מ מחושב מהם.</p>
+    <h3 class="sec-title">📍 המסלול שלנו היום <button class="btn ghost sm" id="sumEdit">✏️ סידור</button></h3>
     <ol class="sum-list">${stops.map((p, i) => `<li><span class="sum-n">${i + 1}</span><span>${esc(p.he)}</span>${i ? `<small>${legs[i - 1].mode === "WALK" ? "🚶 " + fmtDist(legs[i - 1].m) : "🚕 " + fmtMin(legs[i - 1].sec)}</small>` : ""}</li>`).join("")}</ol>
     ${next ? `<div class="promo"><div class="promo-k">מחר · יום ${di + 2} · ${esc(dayLabel(next))}</div>
       <div class="promo-wx">${w2 ? `<span class="promo-ic">${WXI(w2.code)}</span><span><b>${w2.min}°–${w2.max}°</b><br><small>☔ ${w2.rain}% · 💨 ${w2.wind} קמ"ש${w2.sunset ? " · 🌇 " + w2.sunset : ""}</small></span>` : `<span>🌤 התחזית עוד לא זמינה</span>`}</div>
@@ -1209,7 +1224,9 @@ async function openDaySummary(di = day) {
       ${nFirst ? `<div class="small">⏰ מתחילים ב-${esc(nFirst.time)}: ${esc(nFirst.text.slice(0, 80))}</div>` : ""}
       <div class="small" style="margin-top:4px">${esc(wxAdvice(w2, next))}</div>
       <div class="row" style="margin-top:6px">${bringFor(next, w2).slice(0, 5).map(x => `<span class="pill">${esc(x)}</span>`).join("")}</div></div>` : `<div class="promo"><div class="promo-t">זה היה היום האחרון. טיסה טובה הביתה ❤️</div></div>`}`);
-  $("#stepsSave").onclick = () => { const v = parseInt($("#stepsIn").value); const s = store.get("steps", {}); if (v) s[d.date] = v; else delete s[d.date]; store.set("steps", s); toast("נשמר"); openDaySummary(di); };
+  $("#stepsSave").onclick = () => { const v = parseInt($("#stepsIn").value), k = parseFloat($("#kmIn").value); const s = store.get("steps", {}), kd = store.get("kmDay", {});
+    if (v) s[d.date] = v; else delete s[d.date]; if (k) kd[d.date] = k; else delete kd[d.date]; store.set("steps", s); store.set("kmDay", kd); toast("נשמר"); openDaySummary(di); };
+  $("#sumEdit").onclick = () => editSummaryStops(di, stops.map(p => p.id));
   drawSummaryMap(stops, legs, trk);
 }
 async function drawSummaryMap(stops, legs, trk) {
@@ -1242,6 +1259,25 @@ async function drawSummaryMap(stops, legs, trk) {
     run.lines && run.lines.forEach(l => l.setMap(null)); run.lines = lines; step();
   };
   run(); $("#sumReplay").onclick = run;
+}
+
+function editSummaryStops(di, ids) {
+  const d = T.days[di];
+  const draw = () => {
+    const opts = T.places.filter(p => !p.mine && statusOf(p) !== "skip").sort((a, b) => a.he.localeCompare(b.he, "he"));
+    openSheet(`<h2>✏️ המסלול של יום ${di + 1}</h2><p class="small muted">מסדרים לפי הסדר שבו באמת הייתם. ↑↓ מזיזים, ✕ מוחק.</p>
+      <ol class="sum-list">${ids.map((id, i) => `<li><span class="sum-n">${i + 1}</span><span>${esc(P[id].he)}</span><span class="row nowrap" style="margin-inline-start:auto"><button class="btn ghost sm" data-up="${i}" ${i ? "" : "disabled"}>↑</button><button class="btn ghost sm" data-dn="${i}" ${i < ids.length - 1 ? "" : "disabled"}>↓</button><button class="btn ghost sm" data-x="${i}">✕</button></span></li>`).join("")}</ol>
+      <div class="row nowrap"><select id="sumAdd" style="flex:1;min-width:0"><option value="">➕ להוסיף מקום…</option>${opts.map(p => `<option value="${p.id}">${esc(p.he)}</option>`).join("")}</select></div>
+      <div class="row" style="margin-top:10px"><button class="btn acc" id="sumSave">שמירה</button><button class="btn ghost" id="sumReset">איפוס לפי התכנית</button></div>`);
+    const sh = $("#sheet");
+    sh.querySelectorAll("[data-up]").forEach(b => b.onclick = () => { const i = +b.dataset.up; [ids[i - 1], ids[i]] = [ids[i], ids[i - 1]]; draw(); });
+    sh.querySelectorAll("[data-dn]").forEach(b => b.onclick = () => { const i = +b.dataset.dn; [ids[i + 1], ids[i]] = [ids[i], ids[i + 1]]; draw(); });
+    sh.querySelectorAll("[data-x]").forEach(b => b.onclick = () => { ids.splice(+b.dataset.x, 1); draw(); });
+    $("#sumAdd").onchange = e => { if (e.target.value) { ids.push(e.target.value); draw(); } };
+    $("#sumSave").onclick = () => { const o = store.get("sumOrder", {}); o[d.date] = ids; store.set("sumOrder", o); ids.forEach(id => { if (P[id].layer !== "hotel" && statusOf(P[id]) !== "visited") { statusOv[id] = "visited"; } }); store.set("status", statusOv); markShared(); openDaySummary(di); };
+    $("#sumReset").onclick = () => { const o = store.get("sumOrder", {}); delete o[d.date]; store.set("sumOrder", o); openDaySummary(di); };
+  };
+  draw();
 }
 // ---------- ניווט בין מסכים ----------
 async function go(v) {

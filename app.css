@@ -306,3 +306,5 @@ details.mynote[open] summary{display:none}
 .promo-t{font-family:var(--display);font-size:18px;font-weight:700}
 .promo .pill{background:rgba(255,255,255,.18);color:#fff}
 #stepsIn{flex:1;font:inherit;padding:8px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);min-width:0}
+#kmIn{width:90px;font:inherit;padding:8px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.sec-title .btn{margin-inline-start:8px;vertical-align:middle}
