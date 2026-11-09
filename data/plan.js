@@ -1,7 +1,7 @@
 // התוכנית היומית והמצב המשותף. האפליקציה כותבת לקובץ הזה ישירות כשלוחצים "שמירה וסנכרון".
 window.PLAN = {
- "rev": 56,
- "updated": "2026-11-09T15:39:36.783Z",
+ "rev": 57,
+ "updated": "2026-11-09T18:21:16.541Z",
  "by": "טלפון",
  "days": [
   {
@@ -542,7 +542,8 @@ window.PLAN = {
   "marzipan": "visited",
   "szanto": "visited",
   "edeni": "visited",
-  "hotel-spa": "visited"
+  "hotel-spa": "visited",
+  "vaci": "visited"
  },
  "booked": {
   "food-tour": true,
