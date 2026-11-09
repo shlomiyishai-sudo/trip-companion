@@ -307,6 +307,7 @@ async function renderToday() {
           ${p && sayOf(p) ? `<button class="act" data-sayp="${p.id}">🗣 מה לומר</button>` : ""}
           ${it.more ? `<button class="act" data-more="${d.items.indexOf(it)}">${esc(it.more.label)}</button>` : ""}
           ${p && p.layer !== "hotel" ? `<a class="act" href="${gmapsDir(p, hav(HOTEL, loc(p)) > 2500 ? "transit" : "walking")}" target="_blank" rel="noopener">↗ ניווט</a>` : ""}
+          ${p ? `<button class="act" data-cpy="${p.id}">📋 כתובת</button>` : ""}
           <button class="act" data-note="${rk}">📝 הערה</button>
           ${it.mine ? `<button class="act" data-idea="${esc(it.place.slice(5))}">✕ מחיקה</button>`
             : `<button class="act" data-rm="${rk}" data-time="${esc(it.time)}">${isRem ? "↺ ביטול" : "✕ להסיר"}</button>`}
@@ -320,6 +321,7 @@ async function renderToday() {
     if (removed[k]) delete removed[k]; else removed[k] = { date: d.date, time: b.dataset.time, text: k.split("|").slice(1).join("|") };
     store.set("removed", removed); toast(removed[k] ? "סומן להסרה. ייכנס לעדכון הבא" : "ההסרה בוטלה"); renderToday(); });
   el.querySelectorAll("[data-bk]").forEach(b => b.onclick = () => openBooking(b.dataset.bk));
+  tl.querySelectorAll("[data-cpy]").forEach(b => b.onclick = () => copyAddr(P[b.dataset.cpy]));
   tl.querySelectorAll("[data-sayp]").forEach(b => b.onclick = () => { const p = P[b.dataset.sayp]; openSay(sayOf(p), p.he); });
   tl.querySelectorAll("[data-note]").forEach(b => b.onclick = () => { const k = b.dataset.note; editNote("it:" + k, k.split("|").slice(1).join("|"), renderToday); });
   tl.querySelectorAll("[data-idea]").forEach(b => b.onclick = () => deleteIdea(b.dataset.idea));
@@ -332,6 +334,7 @@ async function renderToday() {
   if (isToday) { drawNowBar(d, curIdx, nextIdx); if (!renderToday.scrolled) { renderToday.scrolled = true; const li = tl.querySelector(".is-now, .is-next"); if (li) setTimeout(() => li.scrollIntoView({ behavior: "smooth", block: "center" }), 300); } }
   // השלמת תמונות ודירוגים ברקע
   for (const it of d.items) { const p = it.place && P[it.place]; if (p && !info(p.id)) { resolve(p).then(() => { if (view === "today" && T.days[day] === d) patchThumbs(); }); } }
+  (async () => { for (const it of d.items) { const p = it.place && P[it.place]; if (p && p.layer !== "hotel" && !(info(p.id) || {}).addrHu) await fetchHuAddr(p); } })();
 }
 function patchThumbs() { document.querySelectorAll(".ti-main[data-place]").forEach(b => { const c = info(b.dataset.place); const ph = b.querySelector(".ti-photo"); if (c && c.photo && ph && !ph.querySelector("img")) ph.innerHTML = `<img src="${esc(c.photo)}" alt="" loading="lazy">`; const sb = b.querySelector(".sb"); if (c && c.rating && sb && !sb.textContent.includes("★")) sb.textContent += " · ★ " + c.rating; }); }
 function pickTips(d) {
@@ -364,6 +367,7 @@ async function openPlace(p) {
         <a class="btn acc" href="${gmapsDir(p)}" target="_blank" rel="noopener">🚶 ניווט בגוגל מפס</a>
         <button class="btn" id="showOnMap">הצג במפה</button>
         <button class="btn ghost" id="taxiBtn">🚕 להראות לנהג</button>
+        <button class="btn ghost" id="cpyBtn">📋 העתקת כתובת</button>
         <a class="btn ghost" href="${c && c.gid ? gmapsPlace(p) : gmapsPlace(p)}" target="_blank" rel="noopener">פתח בגוגל מפס</a>
       </div>
       ${p.layer !== "hotel" ? `<div class="status" role="group" aria-label="סימון">${Object.entries(STATUS).map(([k, v]) => `<button data-st="${k}" class="${st === k ? "on" : ""}">${v}</button>`).join("")}</div>` : ""}
@@ -372,6 +376,7 @@ async function openPlace(p) {
     $("#plNote").onclick = () => editNote("pl:" + p.id, p.he, () => openPlace(p));
     $("#showOnMap").onclick = () => { closeSheet(); mapLayer = "all"; go("map").then(() => focusPlace(p)); };
     $("#taxiBtn").onclick = () => openTaxi(p);
+    $("#cpyBtn").onclick = () => copyAddr(p);
     $("#sheet").querySelectorAll("[data-st]").forEach(b => b.onclick = () => { statusOv[p.id] = b.dataset.st; if (b.dataset.st === "visited") markVisitedAt(p.id); store.set("status", statusOv); markShared(); draw(info(p.id), open); toast("סומן: " + STATUS[b.dataset.st]); refreshMarkers(); });
     if (p.id !== HOTEL.id) leg(HOTEL, p).then(l => { const f = $("#fromHotel"); if (f) f.innerHTML = `<span class="k">מהמלון:</span> ${l.mode === "WALK" ? "🚶" : "🚇"} ${fmtMin(l.sec)}${l.mode === "WALK" ? " (" + fmtDist(l.m) + ")" : ""}`; });
     else { const f = $("#fromHotel"); if (f) f.remove(); }
@@ -1151,6 +1156,22 @@ async function fillHours(after) {
 }
 
 // ---------- להראות לנהג המונית ----------
+const HOTEL_ADDR = "Dessewffy utca 14, 1066 Budapest";
+const addrNow = p => { if (p.id === HOTEL.id || p.layer === "hotel") return HOTEL_ADDR; const c = info(p.id) || {}; return c.addrHu || (/\d/.test(p.q || "") ? p.q : "") || c.addr || p.name; };
+async function fetchHuAddr(p) {
+  if (p.layer === "hotel") return HOTEL_ADDR; const c = info(p.id); if (c && c.addrHu) return c.addrHu;
+  try { if (!c || !c.gid) await resolve(p); const c2 = info(p.id); if (!c2 || !c2.gid) return addrNow(p);
+    const g = await loadGoogle(); const pl = new g.maps.places.Place({ id: c2.gid, requestedLanguage: "hu" }); await pl.fetchFields({ fields: ["formattedAddress"] });
+    if (pl.formattedAddress) { const a = pl.formattedAddress.replace(/,\s*(Magyarország|Hungary)$/, ""); infoCache[p.id] = { ...info(p.id), addrHu: a }; store.set("info", infoCache); return a; } } catch {}
+  return addrNow(p);
+}
+async function copyAddr(p) {
+  const have = (info(p.id) || {}).addrHu || p.layer === "hotel";
+  try {
+    if (!have && window.ClipboardItem && navigator.clipboard.write) { await navigator.clipboard.write([new ClipboardItem({ "text/plain": fetchHuAddr(p).then(a => new Blob([a], { type: "text/plain" })) })]); toast("הכתובת הועתקה ✓ " + addrNow(p)); return; }
+    const a = have ? addrNow(p) : await fetchHuAddr(p); await navigator.clipboard.writeText(a); toast("הכתובת הועתקה ✓ " + a);
+  } catch { const a = await fetchHuAddr(p); openSheet(`<h2>📋 כתובת</h2><p class="small muted">לוחצים לחיצה ארוכה ← העתק</p><div class="copyable" dir="ltr" style="font-size:20px;user-select:all">${esc(a)}</div>`); }
+}
 async function openTaxi(p) {
   const c = info(p.id) || {};
   const addr0 = p.id === HOTEL.id ? "Dessewffy utca 14, 1066 Budapest" : (c.addrHu || "");
@@ -1159,9 +1180,8 @@ async function openTaxi(p) {
     <div class="row" style="justify-content:center"><a class="btn acc" href="${gmapsDir(p, "driving")}" target="_blank" rel="noopener">↗ ניווט ברכב</a><button class="btn ghost" id="txCopy">העתקת הכתובת</button></div>
     <p class="muted small" style="text-align:center">מסובבים את הטלפון לנהג. ב-Bolt מדביקים את הכתובת ביעד.</p>`);
   $("#txCopy").onclick = async () => { try { await navigator.clipboard.writeText(($("#txAddr").textContent || "").trim()); toast("הועתק"); } catch { toast("סמן והעתק"); } };
-  if (addr0 || !c.gid) return;
-  try { const g = await loadGoogle(); const pl = new g.maps.places.Place({ id: c.gid, requestedLanguage: "hu" }); await pl.fetchFields({ fields: ["formattedAddress"] });
-    if (pl.formattedAddress) { c.addrHu = pl.formattedAddress.replace(/, Magyarország$|, Hungary$/, ""); infoCache[p.id] = { ...info(p.id), addrHu: c.addrHu }; store.set("info", infoCache); const a = $("#txAddr"); if (a) a.textContent = c.addrHu; } } catch {}
+  if (addr0) return;
+  const a2 = await fetchHuAddr(p); const a = $("#txAddr"); if (a && a2) a.textContent = a2;
 }
 // ---------- סיכום יומי עם מפה מונפשת ----------
 const STEP_M = 0.65, STEP_PER_M = 1 / STEP_M; // 65 ס"מ לצעד
@@ -1207,7 +1227,7 @@ async function openDaySummary(di = day) {
   const w2 = next && wxFor(next.date);
   const nFirst = next && (next.items.find(i => i.anchor && /^\d/.test(i.time)) || next.items.find(i => /^\d/.test(i.time)));
   openSheet(`<h2>🌙 סיכום יום ${di + 1} · ${esc(dayLabel(d))}</h2><p class="muted small" style="margin-top:-4px">${esc(d.title)}</p>
-    <div class="sum-map-wrap"><div id="sumMap" class="sum-map"></div><button class="btn sm sum-replay" id="sumReplay">▶ שוב</button></div>
+    <div class="sum-map-wrap"><div id="sumMap" class="sum-map"></div><div class="sum-ctl"><button class="btn sm" id="sumReplay">▶ שוב</button><button class="btn sm ghost" id="sumFull">⛶ מסך מלא</button></div></div>
     <div class="bigstats three">
       <div><b id="stepsVal">${stepsMan ? fmtN(stepsMan) : "~" + fmtN(estSteps)}</b><span>${stepsMan ? "צעדים (מהטלפון)" : "צעדים (הערכה)"}</span></div>
       <div><b>${(km / 1000).toFixed(1)}</b><span>${kmLbl}</span></div>
@@ -1241,22 +1261,36 @@ async function drawSummaryMap(stops, legs, trk) {
   const mover = document.createElement("div"); mover.className = "sum-mover"; mover.textContent = "🚶";
   const mk = new AdvancedMarkerElement({ map: m, position: loc(stops[0]), content: mover, zIndex: 999 });
   if (trk.length > 10) new g.maps.Polyline({ map: m, path: trk.map(t => ({ lat: t[0], lng: t[1] })), strokeColor: "#7A4DD8", strokeOpacity: .35, strokeWeight: 3 });
+  // אורך כל קטע לאורך המסלול, כדי להתקדם לפי מרחק ולא לפי מספר נקודות
+  segs.forEach(sg => { sg.cum = [0]; for (let i = 1; i < sg.path.length; i++) sg.cum.push(sg.cum[i - 1] + hav(sg.path[i - 1], sg.path[i])); sg.len = sg.cum[sg.cum.length - 1] || 1;
+    sg.dur = sg.mode === "WALK" ? 2600 + sg.len * 9 : 3000 + sg.len * 1.2; });
+  const at = (sg, dist) => { let i = 1; while (i < sg.cum.length - 1 && sg.cum[i] < dist) i++; const a = sg.path[i - 1], b2 = sg.path[i], seg = (sg.cum[i] - sg.cum[i - 1]) || 1, f = Math.min(1, Math.max(0, (dist - sg.cum[i - 1]) / seg));
+    return { idx: i, pos: { lat: a.lat + (b2.lat - a.lat) * f, lng: a.lng + (b2.lng - a.lng) * f } }; };
+  let follow = false;
+  const wrap = el.closest(".sum-map-wrap"), fsBtn = $("#sumFull");
+  if (fsBtn) fsBtn.onclick = () => { const on = !wrap.classList.contains("full"); wrap.classList.toggle("full", on); document.body.classList.toggle("noscroll", on); fsBtn.textContent = on ? "✕ סגירה" : "⛶ מסך מלא"; follow = on;
+    setTimeout(() => { if (on) { m.setZoom(16); m.panTo(mk.position); } else m.fitBounds(b, 40); }, 80); };
   const run = () => {
     if (sumAnim) cancelAnimationFrame(sumAnim); const lines = [];
+    (run.lines || []).forEach(l => l.setMap(null)); run.lines = lines;
     pins.forEach((p, i) => p.content.style.opacity = i ? "0" : "1");
-    let si = 0, pi = 0, line = null; const speed = Math.max(2, Math.round(segs.reduce((a, s) => a + s.path.length, 0) / 260));
-    const step = () => {
+    let si = 0, t0 = null, line = null, pause = 0, lastPan = 0;
+    const step = ts => {
       if (!$("#sumMap")) return;
-      const s = segs[si]; if (!s) { mover.textContent = "🏁"; return; }
-      if (!line) { mover.textContent = s.mode === "WALK" ? "🚶" : "🚕";
-        line = new g.maps.Polyline({ map: m, path: [], strokeColor: s.mode === "WALK" ? "#D9622B" : "#2F6FDE", strokeOpacity: s.mode === "WALK" ? .95 : 0, strokeWeight: 5,
-          icons: s.mode === "WALK" ? [] : [{ icon: { path: "M 0,-1 0,1", strokeOpacity: 1, scale: 3.5, strokeColor: "#2F6FDE" }, offset: "0", repeat: "12px" }] }); lines.push(line); }
-      for (let k = 0; k < speed && pi < s.path.length; k++, pi++) line.getPath().push(new g.maps.LatLng(s.path[pi]));
-      mk.position = s.path[Math.min(pi, s.path.length - 1)];
-      if (pi >= s.path.length) { si++; pi = 0; line = null; if (pins[si]) pins[si].content.style.opacity = "1"; }
+      const sg = segs[si]; if (!sg) { mover.textContent = "🏁"; return; }
+      if (pause) { if (ts < pause) { sumAnim = requestAnimationFrame(step); return; } pause = 0; t0 = null; }
+      if (t0 == null) { t0 = ts; mover.textContent = sg.mode === "WALK" ? "🚶" : "🚕";
+        line = new g.maps.Polyline({ map: m, path: [sg.path[0]], strokeColor: sg.mode === "WALK" ? "#D9622B" : "#2F6FDE", strokeOpacity: sg.mode === "WALK" ? .95 : 0, strokeWeight: 6,
+          icons: sg.mode === "WALK" ? [] : [{ icon: { path: "M 0,-1 0,1", strokeOpacity: 1, scale: 3.5, strokeColor: "#2F6FDE" }, offset: "0", repeat: "12px" }] }); lines.push(line); line._n = 1; }
+      const fr = Math.min(1, (ts - t0) / sg.dur), dist = sg.len * (fr < .5 ? 2 * fr * fr : 1 - Math.pow(-2 * fr + 2, 2) / 2), { idx, pos } = at(sg, dist);
+      const path = line.getPath(); while (line._n < idx) { path.push(new g.maps.LatLng(sg.path[line._n])); line._n++; }
+      if (path.getLength() > line._n) path.setAt(path.getLength() - 1, new g.maps.LatLng(pos)); else path.push(new g.maps.LatLng(pos));
+      mk.position = pos;
+      if (follow && ts - lastPan > 400) { m.panTo(pos); lastPan = ts; }
+      if (fr >= 1) { si++; if (pins[si]) pins[si].content.style.opacity = "1"; pause = ts + 900; }
       sumAnim = requestAnimationFrame(step);
     };
-    run.lines && run.lines.forEach(l => l.setMap(null)); run.lines = lines; step();
+    sumAnim = requestAnimationFrame(step);
   };
   run(); $("#sumReplay").onclick = run;
 }
