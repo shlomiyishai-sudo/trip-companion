@@ -218,6 +218,8 @@ window.TRIP = {
       why: "נקודת המפגש לשיט של בודפשט עם בר: פסל הסוס של אנדראשי בכיכר קושוט, משמאל לבניין הפרלמנט כשהפנים לנהר. יש שני פסלי סוסים, והמדריך מחכה ליד זה שקרוב יותר לנהר. השיט מקורה ומחומם, עם מרפסת חיצונית ומשקה." },
     { id: "north-face", name: "The North Face Store", he: "דה נורת' פייס", layer: "shop", status: "must", tags: ["indoor"], q: "The North Face Store Váci utca 12 Budapest", lat: 47.4946, lng: 19.0525,
       why: "החנות של The North Face ברחוב ואצי 12. פתוחה שני עד שבת 10:00–21:00, וראשון 10:00–20:00. טלפון: +36 30 151 3512." },
+    { id: "pepco", name: "Pepco Károly körút", he: "פפקו", layer: "shop", status: "nice", tags: ["indoor","quick"], q: "Pepco Károly körút Budapest", lat: 47.4968, lng: 19.0573,
+      why: "רשת זולה לבית, לבגדים ולמתנות קטנות. הסניף הקרוב בשדרות Károly körút, ליד דאק ואסטוריה. את המיקום והשעות המדויקים כדאי לבדוק בכרטיס מגוגל." },
     { id: "kovacs-kert", name: "Kovács-Kert Visegrád", he: "קובאץ'-קרט, ויסגרד", layer: "food", status: "nice", tags: ["indoor"], q: "Kovács-Kert Étterem Visegrád Fő utca 66", lat: 47.7850, lng: 18.9710,
       why: "מסעדה הונגרית ביתית בוויסגרד, פתוחה כל יום 12:00–21:00, כולל ימי שני. חלופה נוחה לרנסאנס." },
     { id: "renaissance", name: "Renaissance Restaurant Visegrád", he: "מסעדת רנסאנס, ויסגרד", layer: "maybe", status: "maybe", tags: ["indoor"], q: "Reneszánsz Étterem Visegrád Fő utca 11", lat: 47.7905, lng: 18.9645,
