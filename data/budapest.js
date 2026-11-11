@@ -299,7 +299,7 @@ window.TRIP = {
       note: "מזמינים באתר aleli.hu, ל-9.11 ב-19:30 ל-2 סועדים. את הנוסח הזה מדביקים בשדה ההערות: We keep kosher-style: no pork or pork products (please check pasta sauces for guanciale, pancetta or prosciutto), no seafood or shellfish (fish is fine), and no mixing of meat and dairy (no cheese, butter or cream in meat dishes). My wife cannot eat fava beans. Thank you!" },
     { id: "basilica", title: "כרטיס לבזיליקה ולתצפית", when: "8.11, 15:00", urgency: "low",
       note: "המלצה: לקנות מראש אונליין, רק באתר הרשמי של הבזיליקה, כרטיס משולב (תצפית, אוצר ופנים הכנסייה) ב-6,800 פורינט לאדם. את הכרטיס מממשים בדלפק כ-50 מ' מהכניסה, בלי לעמוד בתור לקופה (הטיפ של BudaBest). ביום ראשון פנים הכנסייה פתוח רק מ-13:00, והתור נבנה בשעות שאחרי הפתיחה. התצפית פתוחה 09:00–19:00. אם התור לפנים הכנסייה ארוך, עולים קודם לתצפית ונכנסים לכנסייה בסוף." },
-    { id: "bombay", title: "❌ בוטל: בומביי", when: "10.11, 21:00", urgency: "mid", done: true,
+    { id: "bombay", title: "✅ בומביי (צהריים 11.11)", when: "10.11, 21:00", urgency: "mid", done: true,
       note: "הוזמן! 2 סועדים, ביום שלישי 10.11 ב-21:00 (שעון בודפשט). הכתובת: Október 6. u. 17, ליד הבזיליקה, כ-7 דק' מהמלון. אם לא מגיעים, מבטלים מראש דרך Reserve with Google במייל האישור." },
     { id: "leo-table", title: "❌ בוטל: שולחן בליאו (רופטופ)", when: "11.11, 13:00", urgency: "mid", done: true,
       note: "הוזמן ב-OpenTable: יום רביעי 11.11 ב-13:00, 2 סועדים, באזור ללא עישון. השם בהזמנה: Shlomi yishay. Clark Ádám tér 1, על הגג של מלון קלארק. טלפון: +36 70 944 6320. ההזמנה לשעתיים, כך שב-14:15 יוצאים לחשמלית. שינוי או ביטול דרך המייל של OpenTable." },
