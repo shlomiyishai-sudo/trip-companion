@@ -504,6 +504,7 @@ function renderDocs() {
   const remList = Object.entries(removed), skipped = T.places.filter(p => !p.mine && statusOv[p.id] === "skip");
   const nChanges = remList.length + skipped.length + ideas.length + myNoteKeys().length;
   el.innerHTML = `
+    <div class="tools tools-top"><button class="tool big" data-tool="trip"><span>🏆</span>סיכום הטיול</button><button class="tool big" data-tool="album"><span>🎞</span>אלבום הטיול</button></div>
     <div class="tools">
       <button class="tool" data-tool="prep"><span>✈️</span>הכנה לטיסה</button>
       <button class="tool" data-tool="ics"><span>📅</span>ללוח השנה</button>
@@ -563,7 +564,7 @@ function renderDocs() {
   $("#shopping").oninput = e => store.set("shopping", e.target.value);
   $("#gmList").onclick = openGmList;
   $("#vaultBtn2").onclick = openVault;
-  el.querySelectorAll("[data-tool]").forEach(b => b.onclick = () => ({ prep: prepOffline, ics: exportIcs, exp: openExpenses, pack: openPacking, sum: () => openSheet(`<h2>🌙 סיכומי הימים</h2><div class="list">${T.days.map((d, i) => `<button class="ti-card" data-sumd="${i}"><span class="tx"><span class="nm">יום ${i + 1} · ${esc(dayLabel(d))}</span><span class="sb">${esc(d.title)}</span></span></button>`).join("")}</div>`) || $("#sheet").querySelectorAll("[data-sumd]").forEach(x => x.onclick = () => openDaySummary(+x.dataset.sumd)), vault: openVault, done: () => { mapLayer = "visited"; go("map"); toast("כל המקומות שסימנתם \"ביקרנו\". מכאן אפשר גם לייצא ל-My Maps") } })[b.dataset.tool]());
+  el.querySelectorAll("[data-tool]").forEach(b => b.onclick = () => ({ prep: prepOffline, ics: exportIcs, trip: openTripSummary, album: openAlbum, exp: openExpenses, pack: openPacking, sum: () => openSheet(`<h2>🌙 סיכומי הימים</h2><div class="list">${T.days.map((d, i) => `<button class="ti-card" data-sumd="${i}"><span class="tx"><span class="nm">יום ${i + 1} · ${esc(dayLabel(d))}</span><span class="sb">${esc(d.title)}</span></span></button>`).join("")}</div>`) || $("#sheet").querySelectorAll("[data-sumd]").forEach(x => x.onclick = () => openDaySummary(+x.dataset.sumd)), vault: openVault, done: () => { mapLayer = "visited"; go("map"); toast("כל המקומות שסימנתם \"ביקרנו\". מכאן אפשר גם לייצא ל-My Maps") } })[b.dataset.tool]());
   $("#kmlAll").onclick = () => kml(T.places.filter(p => statusOf(p) !== "skip"), "budapest-all");
   $("#kmlVisited").onclick = () => { const v = T.places.filter(p => statusOf(p) === "visited"); if (!v.length) return toast("עוד לא סימנתם מקומות כ\"ביקרנו\""); kml(v, "budapest-visited"); };
 }
@@ -1312,6 +1313,90 @@ function editSummaryStops(di, ids) {
     $("#sumReset").onclick = () => { const o = store.get("sumOrder", {}); delete o[d.date]; store.set("sumOrder", o); openDaySummary(di); };
   };
   draw();
+}
+// ---------- סיכום הטיול ואלבום ----------
+const MEAL_RX = /restaurant|étterem|bistro|bisztró|vendéglő|kert|pub|grill|ramsay|bombay|aleli|passata|labirintus|boatanic|for sale|taj/i;
+function tripVisited() {
+  const seen = new Set(), out = [];
+  T.days.forEach((d, di) => summaryStops(d).forEach(p => { if (p.layer === "hotel" || p.id === "fox-autorent" || kindOf(p) === "skip" || p.id.startsWith("bus27") || seen.has(p.id) || statusOf(p) !== "visited") return; seen.add(p.id); out.push({ p, di }); }));
+  T.places.forEach(p => { if (!seen.has(p.id) && statusOf(p) === "visited" && p.layer !== "hotel" && p.id !== "fox-autorent" && kindOf(p) !== "skip") { seen.add(p.id); out.push({ p, di: null }); } });
+  return out;
+}
+const KIND_FIX = { szimpla: "sight", "market-hall": "sight", bormuzeum: "bar", "national-museum": "meal", "hotel-spa": "skip" };
+const ALB_LBL = { "national-museum": "הסיור הקולינרי", szimpla: "שוק האיכרים בשימפלה", bormuzeum: "טעימות במוזיאון היין" };
+const kindOf = p => { if (KIND_FIX[p.id]) return KIND_FIX[p.id]; const t = p.tags || []; if (p.layer === "food") { if (t.includes("drink") && !MEAL_RX.test(p.name)) return "bar"; if (t.includes("sweet") && !MEAL_RX.test(p.name)) return "sweet"; if (/café|cafe|coffee|kávé/i.test(p.name)) return "sweet"; return "meal"; } if (p.layer === "shop") return "shop"; return "sight"; };
+async function tripStats() {
+  const steps = store.get("steps", {}), kmd = store.get("kmDay", {}), days = [];
+  for (const d of T.days) {
+    const stops = summaryStops(d); let walkM = 0;
+    for (let i = 1; i < stops.length; i++) { const l = await leg(stops[i - 1], stops[i]); if (l.mode === "WALK") walkM += l.m; }
+    const km = kmd[d.date] ? kmd[d.date] : steps[d.date] ? steps[d.date] * STEP_M / 1000 : walkM / 1000;
+    const st = steps[d.date] || Math.round(km * 1000 / STEP_M / 100) * 100;
+    days.push({ d, km, steps: st, real: !!(steps[d.date] || kmd[d.date]) });
+  }
+  const vis = tripVisited(), extraMeals = T.days.flatMap(d => d.items.filter(i => i.meal && !i.place));
+  const cnt = k => vis.filter(x => kindOf(x.p) === k).length;
+  return { days, vis, km: days.reduce((a, x) => a + x.km, 0), steps: days.reduce((a, x) => a + x.steps, 0),
+    sights: cnt("sight"), meals: cnt("meal") + extraMeals.length, sweets: cnt("sweet"), bars: cnt("bar"), shops: cnt("shop"), extraMeals };
+}
+async function openTripSummary() {
+  openSheet(`<h2>🏆 סיכום הטיול</h2><p class="muted">מחשב…</p>`);
+  const s = await tripStats(), maxKm = Math.max(...s.days.map(x => x.km), 1), allReal = s.days.every(x => x.real);
+  const exp = expenses.filter(x => !x.del); let spent = 0; for (const x of exp) spent += await expHuf(x);
+  openSheet(`<div class="trip-hero"><div class="th-k">${esc(T.title)} · ${esc(dayLabel(T.days[0]))} – ${esc(dayLabel(T.days[T.days.length - 1]))}</div><div class="th-t">שלומי ואדווה ❤️</div>
+      <div class="th-big"><div><b>${fmtN(s.steps)}</b><span>צעדים${allReal ? "" : " (חלק הערכה)"}</span></div><div><b>${s.km.toFixed(1)}</b><span>ק"מ ברגל</span></div></div></div>
+    <div class="trip-grid">
+      <div><b>${T.days.length}</b><span>ימים</span></div><div><b>${s.sights}</b><span>מקומות ואתרים</span></div><div><b>${s.meals}</b><span>מסעדות</span></div>
+      <div><b>${s.sweets}</b><span>בתי קפה ומתוקים</span></div><div><b>${s.bars}</b><span>ברים</span></div><div><b>${s.vis.length + s.extraMeals.length}</b><span>סה"כ עצירות</span></div>
+    </div>
+    <h3 class="sec-title">🚶 ק"מ בכל יום</h3>
+    <div class="kmbars">${s.days.map((x, i) => `<div class="kb"><span class="kb-l">יום ${i + 1}</span><span class="kb-b"><i style="width:${Math.max(4, x.km / maxKm * 100)}%"></i></span><span class="kb-v">${x.km.toFixed(1)} ק"מ · ${fmtN(x.steps)}${x.real ? "" : "*"}</span></div>`).join("")}</div>
+    ${allReal ? "" : `<p class="muted small">* הערכה לפי המסלול. כדי לקבל מספרים מדויקים, מכניסים את הצעדים מאפליקציית הבריאות בסיכום של אותו יום.</p>`}
+    ${spent ? `<p class="small">💰 הוצאות שנרשמו: <b>${fmtN(spent)}</b> פורינט</p>` : ""}
+    <h3 class="sec-title">🍽 איפה אכלנו</h3><div class="row">${s.vis.filter(x => kindOf(x.p) === "meal").map(x => `<span class="pill">${esc(ALB_LBL[x.p.id] || x.p.he)}</span>`).join("")}${s.extraMeals.map(i => `<span class="pill">${esc(i.mealName || i.text)}</span>`).join("")}</div>
+    <h3 class="sec-title">⭐ מה ראינו</h3><div class="row">${s.vis.filter(x => kindOf(x.p) === "sight").map(x => `<span class="pill">${esc(ALB_LBL[x.p.id] || x.p.he)}</span>`).join("")}</div>
+    <div class="row" style="margin-top:14px"><button class="btn acc" id="tsAlbum">🎞 לאלבום הטיול</button><button class="btn ghost" id="tsMap">🗺 המפה של כל מה שעשינו</button></div>`);
+  $("#tsAlbum").onclick = openAlbum; $("#tsMap").onclick = () => { closeSheet(); mapLayer = "visited"; go("map"); };
+}
+// ---- אלבום ----
+const albPhotos = async p => {
+  const mine = []; for (let i = 0; i < 6; i++) { const d = await idb.get("alb:" + p.id + ":" + i); if (d) mine.push({ src: d, mine: true }); }
+  if (mine.length) return mine;
+  const c = info(p.id), out = [];
+  try { const g = await loadGoogle(); if (!c || !c.gid) await resolve(p); const c2 = info(p.id);
+    if (c2 && c2.gid) { const pl = new g.maps.places.Place({ id: c2.gid }); await pl.fetchFields({ fields: ["photos"] }); (pl.photos || []).slice(0, 2).forEach(ph => out.push({ src: ph.getURI({ maxWidth: 1600 }), by: (ph.authorAttributions || [])[0]?.displayName || "Google" })); } } catch {}
+  if (!out.length && c && c.photo) out.push({ src: c.photo, by: "Google" });
+  return out;
+};
+let albTimer = null;
+async function openAlbum() {
+  closeSheet();
+  let ov = $("#album"); if (!ov) { ov = document.createElement("div"); ov.id = "album"; document.body.appendChild(ov); }
+  ov.hidden = false; document.body.classList.add("noscroll");
+  ov.innerHTML = `<div class="al-load"><div class="al-t">🎞 אלבום הטיול</div><div class="al-s">אוסף את התמונות…</div></div>`;
+  const s = await tripStats(), slides = [{ type: "title" }];
+  for (const x of s.vis) { const ph = await albPhotos(x.p); ph.forEach(img => slides.push({ type: "img", img, p: x.p, di: x.di })); if (!ph.length) slides.push({ type: "txt", p: x.p, di: x.di }); }
+  s.extraMeals.forEach(i => slides.push({ type: "txt", label: i.mealName || i.text, di: T.days.findIndex(d => d.items.includes(i)) }));
+  slides.push({ type: "end" });
+  let k = 0, playing = true;
+  const show = () => {
+    const sl = slides[k], dl = sl.di != null && sl.di >= 0 ? `יום ${sl.di + 1} · ${dayLabel(T.days[sl.di])}` : "";
+    const body = sl.type === "title" ? `<div class="al-card"><div class="al-t">${esc(T.title)} 2026</div><div class="al-s">שלומי ואדווה · ${esc(dayLabel(T.days[0]))} – ${esc(dayLabel(T.days[T.days.length - 1]))}</div></div>`
+      : sl.type === "end" ? `<div class="al-card"><div class="al-t">❤️</div><div class="al-s">${fmtN(s.steps)} צעדים · ${s.km.toFixed(1)} ק"מ · ${s.sights} מקומות · ${s.meals} מסעדות</div><div class="al-s">עד הטיול הבא ✈️</div></div>`
+      : sl.type === "txt" ? `<div class="al-card"><div class="al-t">${esc(sl.label || ALB_LBL[sl.p.id] || sl.p.he)}</div><div class="al-s">${esc(dl)}</div></div>`
+      : `<img class="al-img kb${k % 4}" src="${esc(sl.img.src)}" alt=""><div class="al-cap"><b>${esc(ALB_LBL[sl.p.id] || sl.p.he)}</b><span>${esc(dl)}</span></div>${sl.img.by && !sl.img.mine ? `<div class="al-by">📷 ${esc(sl.img.by)} · Google</div>` : ""}`;
+    ov.innerHTML = `<div class="al-stage">${body}</div><div class="al-prog"><i style="width:${(k + 1) / slides.length * 100}%"></i></div>
+      <div class="al-ctl"><button id="alX">✕</button><button id="alPrev">‹</button><button id="alPlay">${playing ? "⏸" : "▶"}</button><button id="alNext">›</button>${sl.p ? `<label class="al-add">📷 תמונה שלנו<input type="file" accept="image/*" multiple id="alFile" hidden></label>` : ""}</div>`;
+    $("#alX").onclick = () => { clearTimeout(albTimer); ov.hidden = true; document.body.classList.remove("noscroll"); };
+    $("#alPrev").onclick = () => { k = (k - 1 + slides.length) % slides.length; show(); };
+    $("#alNext").onclick = () => { k = (k + 1) % slides.length; show(); };
+    $("#alPlay").onclick = () => { playing = !playing; show(); };
+    const f = $("#alFile"); if (f) f.onchange = async e => { const p = sl.p; let n = 0; for (const file of e.target.files) { const dta = await shrink(file); if (dta && n < 6) await idb.put("alb:" + p.id + ":" + n++, dta); }
+      const ph = await albPhotos(p); const start = slides.findIndex(x => x.p === p); let end = start; while (slides[end + 1] && slides[end + 1].p === p) end++;
+      slides.splice(start, end - start + 1, ...ph.map(img => ({ type: "img", img, p, di: sl.di }))); k = start; toast("נוספו התמונות שלכם ✓"); show(); };
+    clearTimeout(albTimer); if (playing) albTimer = setTimeout(() => { k = (k + 1) % slides.length; show(); }, 3500);
+  };
+  show();
 }
 // ---------- ניווט בין מסכים ----------
 async function go(v) {
