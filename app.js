@@ -504,7 +504,7 @@ function renderDocs() {
   const remList = Object.entries(removed), skipped = T.places.filter(p => !p.mine && statusOv[p.id] === "skip");
   const nChanges = remList.length + skipped.length + ideas.length + myNoteKeys().length;
   el.innerHTML = `
-    <div class="tools tools-top"><button class="tool big" data-tool="trip"><span>🏆</span>סיכום הטיול</button><button class="tool big" data-tool="album"><span>🎞</span>אלבום הטיול</button></div>
+    <div class="tools tools-top"><button class="tool big" data-tool="trip"><span>🏆</span>סיכום הטיול</button><button class="tool big" data-tool="album"><span>🎞</span>אלבום הטיול</button><button class="tool" data-tool="imp" style="grid-column:1/-1"><span>📥</span>הוספת תמונות מהגלריה לאלבום</button></div>
     <div class="tools">
       <button class="tool" data-tool="prep"><span>✈️</span>הכנה לטיסה</button>
       <button class="tool" data-tool="ics"><span>📅</span>ללוח השנה</button>
@@ -564,7 +564,7 @@ function renderDocs() {
   $("#shopping").oninput = e => store.set("shopping", e.target.value);
   $("#gmList").onclick = openGmList;
   $("#vaultBtn2").onclick = openVault;
-  el.querySelectorAll("[data-tool]").forEach(b => b.onclick = () => ({ prep: prepOffline, ics: exportIcs, trip: openTripSummary, album: openAlbum, exp: openExpenses, pack: openPacking, sum: () => openSheet(`<h2>🌙 סיכומי הימים</h2><div class="list">${T.days.map((d, i) => `<button class="ti-card" data-sumd="${i}"><span class="tx"><span class="nm">יום ${i + 1} · ${esc(dayLabel(d))}</span><span class="sb">${esc(d.title)}</span></span></button>`).join("")}</div>`) || $("#sheet").querySelectorAll("[data-sumd]").forEach(x => x.onclick = () => openDaySummary(+x.dataset.sumd)), vault: openVault, done: () => { mapLayer = "visited"; go("map"); toast("כל המקומות שסימנתם \"ביקרנו\". מכאן אפשר גם לייצא ל-My Maps") } })[b.dataset.tool]());
+  el.querySelectorAll("[data-tool]").forEach(b => b.onclick = () => ({ prep: prepOffline, ics: exportIcs, trip: openTripSummary, album: openAlbum, imp: openAlbumImport, exp: openExpenses, pack: openPacking, sum: () => openSheet(`<h2>🌙 סיכומי הימים</h2><div class="list">${T.days.map((d, i) => `<button class="ti-card" data-sumd="${i}"><span class="tx"><span class="nm">יום ${i + 1} · ${esc(dayLabel(d))}</span><span class="sb">${esc(d.title)}</span></span></button>`).join("")}</div>`) || $("#sheet").querySelectorAll("[data-sumd]").forEach(x => x.onclick = () => openDaySummary(+x.dataset.sumd)), vault: openVault, done: () => { mapLayer = "visited"; go("map"); toast("כל המקומות שסימנתם \"ביקרנו\". מכאן אפשר גם לייצא ל-My Maps") } })[b.dataset.tool]());
   $("#kmlAll").onclick = () => kml(T.places.filter(p => statusOf(p) !== "skip"), "budapest-all");
   $("#kmlVisited").onclick = () => { const v = T.places.filter(p => statusOf(p) === "visited"); if (!v.length) return toast("עוד לא סימנתם מקומות כ\"ביקרנו\""); kml(v, "budapest-visited"); };
 }
@@ -1355,12 +1355,12 @@ async function openTripSummary() {
     ${spent ? `<p class="small">💰 הוצאות שנרשמו: <b>${fmtN(spent)}</b> פורינט</p>` : ""}
     <h3 class="sec-title">🍽 איפה אכלנו</h3><div class="row">${s.vis.filter(x => kindOf(x.p) === "meal").map(x => `<span class="pill">${esc(ALB_LBL[x.p.id] || x.p.he)}</span>`).join("")}${s.extraMeals.map(i => `<span class="pill">${esc(i.mealName || i.text)}</span>`).join("")}</div>
     <h3 class="sec-title">⭐ מה ראינו</h3><div class="row">${s.vis.filter(x => kindOf(x.p) === "sight").map(x => `<span class="pill">${esc(ALB_LBL[x.p.id] || x.p.he)}</span>`).join("")}</div>
-    <div class="row" style="margin-top:14px"><button class="btn acc" id="tsAlbum">🎞 לאלבום הטיול</button><button class="btn ghost" id="tsMap">🗺 המפה של כל מה שעשינו</button></div>`);
-  $("#tsAlbum").onclick = openAlbum; $("#tsMap").onclick = () => { closeSheet(); mapLayer = "visited"; go("map"); };
+    <div class="row" style="margin-top:14px"><button class="btn acc" id="tsAlbum">🎞 לאלבום הטיול</button><button class="btn" id="tsImp">📥 תמונות מהגלריה</button><button class="btn ghost" id="tsMap">🗺 המפה של כל מה שעשינו</button></div>`);
+  $("#tsAlbum").onclick = openAlbum; $("#tsImp").onclick = openAlbumImport; $("#tsMap").onclick = () => { closeSheet(); mapLayer = "visited"; go("map"); };
 }
 // ---- אלבום ----
 const albPhotos = async p => {
-  const mine = []; for (let i = 0; i < 6; i++) { const d = await idb.get("alb:" + p.id + ":" + i); if (d) mine.push({ src: d, mine: true }); }
+  const mine = []; for (let i = 0; i < 12; i++) { const d = await idb.get("alb:" + p.id + ":" + i); if (d) mine.push({ src: d, mine: true }); }
   if (mine.length) return mine;
   const c = info(p.id), out = [];
   try { const g = await loadGoogle(); if (!c || !c.gid) await resolve(p); const c2 = info(p.id);
@@ -1397,6 +1397,59 @@ async function openAlbum() {
     clearTimeout(albTimer); if (playing) albTimer = setTimeout(() => { k = (k + 1) % slides.length; show(); }, 3500);
   };
   show();
+}
+// ---- ייבוא תמונות מהגלריה לאלבום (נשמר רק בטלפון) ----
+function readExif(buf) {
+  try {
+    const v = new DataView(buf); if (v.getUint16(0) !== 0xFFD8) return {};
+    let o = 2; while (o < v.byteLength - 4) { const m = v.getUint16(o), len = v.getUint16(o + 2);
+      if (m === 0xFFE1 && v.getUint32(o + 4) === 0x45786966) { const t = o + 10, le = v.getUint16(t) === 0x4949;
+        const u16 = x => v.getUint16(t + x, le), u32 = x => v.getUint32(t + x, le);
+        const ifd = off => { const n = u16(off), r = {}; for (let i = 0; i < n; i++) { const e = off + 2 + i * 12; r[u16(e)] = { type: u16(e + 2), cnt: u32(e + 4), val: u32(e + 8), at: e + 8 }; } return r; };
+        const rat = (off, n) => { const a = []; for (let i = 0; i < n; i++) a.push(u32(off + i * 8) / (u32(off + i * 8 + 4) || 1)); return a; };
+        const str = en => { let s = ""; const off = en.cnt > 4 ? en.val : en.at; for (let i = 0; i < en.cnt - 1; i++) s += String.fromCharCode(v.getUint8(t + off + i)); return s; };
+        const i0 = ifd(u32(4)), out = {};
+        if (i0[0x8769]) { const ex = ifd(i0[0x8769].val); const dt = ex[0x9003] || ex[0x9004]; if (dt) out.time = str(dt); }
+        if (!out.time && i0[0x0132]) out.time = str(i0[0x0132]);
+        if (i0[0x8825]) { const g = ifd(i0[0x8825].val);
+          if (g[2] && g[4]) { const la = rat(g[2].val, 3), lo = rat(g[4].val, 3); let lat = la[0] + la[1] / 60 + la[2] / 3600, lng = lo[0] + lo[1] / 60 + lo[2] / 3600;
+            if (g[1] && String.fromCharCode(v.getUint8(t + g[1].at)) === "S") lat = -lat; if (g[3] && String.fromCharCode(v.getUint8(t + g[3].at)) === "W") lng = -lng; out.lat = lat; out.lng = lng; } }
+        return out; }
+      o += 2 + len; }
+  } catch {} return {};
+}
+function guessPlace(ex, file, cands) {
+  if (ex.lat) { let best = null, bd = 1e9; cands.forEach(c => { const d = hav({ lat: ex.lat, lng: ex.lng }, loc(c.p)); if (d < bd) { bd = d; best = c; } }); if (best && bd < 300) return best.p.id; }
+  let ts = null; if (ex.time) { const m = ex.time.match(/(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2})/); if (m) ts = { date: `${m[1]}-${m[2]}-${m[3]}`, min: +m[4] * 60 + +m[5] }; }
+  if (!ts && file.lastModified) { const dt = new Date(file.lastModified); ts = { date: dt.toLocaleDateString("en-CA", { timeZone: T.tz }), min: budMinOf(dt) }; }
+  if (!ts) return "";
+  const d = T.days.find(x => x.date === ts.date); if (!d) return "";
+  const vat = store.get("vat", {}); let best = "", bd = 1e9;
+  d.items.forEach(it => { if (!it.place || !cands.some(c => c.p.id === it.place)) return; const at = vat[it.place] && vat[it.place].d === d.date ? budMinOf(new Date(vat[it.place].t)) : (/^\d/.test(it.time) ? tmin(it.time) : null);
+    if (at == null) return; const diff = ts.min >= at - 20 ? ts.min - at : 9999; if (diff >= 0 && diff < bd) { bd = diff; best = it.place; } });
+  return bd < 240 ? best : "";
+}
+function budMinOf(dt) { const p = new Intl.DateTimeFormat("en-GB", { timeZone: T.tz, hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(dt); return (+p.find(x => x.type === "hour").value % 24) * 60 + +p.find(x => x.type === "minute").value; }
+async function openAlbumImport() {
+  const cands = tripVisited();
+  openSheet(`<h2>📥 תמונות מהגלריה לאלבום</h2>
+    <p class="small">בוחרים כמה תמונות שרוצים בבת אחת, אפשר גם עשרות. האפליקציה משייכת כל תמונה למקום לפי המיקום או השעה שבה צולמה, ואפשר לתקן לפני השמירה. <b>התמונות נשמרות רק בטלפון הזה</b>, לא באינטרנט.</p>
+    <p class="muted small">באייפון: בחלון בחירת התמונות לוחצים למעלה על <b>"אפשרויות"</b> ומדליקים <b>"מיקום"</b>, כדי שהשיוך יהיה מדויק.</p>
+    <label class="btn acc" style="display:inline-block">🖼 בחירת תמונות<input type="file" id="impF" accept="image/*" multiple hidden></label>
+    <div id="impList" class="imp-grid"></div><div class="row" id="impAct"></div>`);
+  $("#impF").onchange = async e => {
+    const files = [...e.target.files], box = $("#impList"); box.innerHTML = `<p class="muted">מעבד ${files.length} תמונות…</p>`;
+    const rows = [];
+    for (const f of files) { const buf = await f.arrayBuffer().catch(() => null); const ex = buf ? readExif(buf) : {}; const data = await shrink(f); if (data) rows.push({ data, pid: guessPlace(ex, f, cands) }); }
+    const opts = `<option value="">— לא להוסיף —</option>` + cands.map(c => `<option value="${c.p.id}">${esc((c.di != null ? "יום " + (c.di + 1) + " · " : "") + (ALB_LBL[c.p.id] || c.p.he))}</option>`).join("");
+    box.innerHTML = rows.map((r, i) => `<div class="imp-it"><img src="${r.data}" alt=""><select data-i="${i}">${opts}</select></div>`).join("");
+    box.querySelectorAll("select").forEach(s => { s.value = rows[+s.dataset.i].pid; s.onchange = () => rows[+s.dataset.i].pid = s.value; });
+    const n = rows.filter(r => r.pid).length;
+    $("#impAct").innerHTML = `<p class="small" style="width:100%">שויכו לבד ${n} מתוך ${rows.length}. מה שלא שויך, בוחרים ידנית.</p><button class="btn acc" id="impSave">שמירה לאלבום</button>`;
+    $("#impSave").onclick = async () => { let saved = 0; const next = {};
+      for (const r of rows) { if (!r.pid) continue; if (next[r.pid] == null) { let k = 0; while (k < 12 && await idb.get("alb:" + r.pid + ":" + k)) k++; next[r.pid] = k; } if (next[r.pid] >= 12) continue; await idb.put("alb:" + r.pid + ":" + next[r.pid]++, r.data); saved++; }
+      toast(`נשמרו ${saved} תמונות לאלבום ✓`); openAlbum(); };
+  };
 }
 // ---------- ניווט בין מסכים ----------
 async function go(v) {
